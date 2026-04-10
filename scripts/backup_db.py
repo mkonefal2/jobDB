@@ -54,7 +54,8 @@ def _needs_backup(db_path: Path, interval_hours: float) -> bool:
 
     age = datetime.now() - datetime.fromtimestamp(latest.stat().st_mtime)
     if age < timedelta(hours=interval_hours):
-        print(f"Skipping: last backup is {age.seconds // 3600}h {(age.seconds % 3600) // 60}m old (interval: {interval_hours}h)")
+        age_h, age_m = age.seconds // 3600, (age.seconds % 3600) // 60
+        print(f"Skipping: last backup is {age_h}h {age_m}m old (interval: {interval_hours}h)")
         return False
 
     if _db_checksum(db_path) == _db_checksum(latest):
