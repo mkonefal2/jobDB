@@ -39,10 +39,11 @@ class PracaPLScraper(BaseScraper):
 
         for card in cards:
             try:
-                offer = self._parse_card(card)
-                if offer and offer.source_id not in seen_ids:
-                    seen_ids.add(offer.source_id)
-                    offers.append(offer)
+                parsed = self._parse_card(card)
+                for offer in parsed:
+                    if offer.source_id not in seen_ids:
+                        seen_ids.add(offer.source_id)
+                        offers.append(offer)
             except Exception:
                 continue
 
@@ -80,106 +81,37 @@ class PracaPLScraper(BaseScraper):
 
         return offers
 
-    def _parse_card(self, card) -> JobOffer | None:
-        # Extract link from <a class="listing__title">
+    def _parse_card(self, card) -> list[JobOffer]:
+        # Check if this is a multi-location card (title is a <button>, not <a>)
+        button_title = card.css_first("button.listing__title")
+        if button_title:
+            return self._parse_multi_location_card(card, button_title)
+
+        # Single-location card
         link = card.css_first("a.listing__title")
         if not link:
             link = card.css_first("a[href]")
         if not link:
-            return None
+            return []
 
         href = link.attributes.get("href", "")
-        # praca.pl uses data-id attribute or URL pattern _XXXXXXXX.html
         source_id = link.attributes.get("data-id", "")
         if not source_id:
             match = re.search(r"_(\d{7,10})\.html", href)
             if not match:
-                return None
+                return []
             source_id = match.group(1)
 
         url = urljoin(self.base_url, href)
-
-        # Title
         title = link.attributes.get("title", "") or link.text(strip=True)
         if not title:
-            return None
+            return []
 
-        # Company — <a class="listing__employer-name">
-        company = None
-        company_el = card.css_first("a.listing__employer-name, .listing__employer-name")
-        if company_el:
-            company = company_el.text(strip=True)
+        company, work_mode, location_raw, seniority, employment_type, salary_min, salary_max, currency, period = (
+            self._extract_card_fields(card)
+        )
 
-        # Work mode — read BEFORE location because work-model is nested inside location
-        work_mode = WorkMode.UNKNOWN
-        work_mode_el = card.css_first("span.listing__work-model")
-        wm_text = work_mode_el.text().lower() if work_mode_el else ""
-        # Also check full card text for work mode when element not found
-        if not wm_text:
-            wm_text = card.text().lower()
-        if "zdalna" in wm_text or "remote" in wm_text:
-            work_mode = WorkMode.REMOTE
-        elif "hybrydow" in wm_text:
-            work_mode = WorkMode.HYBRID
-        elif "mobilna" in wm_text or "mobiln" in wm_text:
-            work_mode = WorkMode.ONSITE  # mobilna = field work, closest to onsite
-        elif "stacjonarn" in wm_text:
-            work_mode = WorkMode.ONSITE
-
-        # Location — <span class="listing__location-name"> or <span class="listing__location">
-        # Note: work-model span is NESTED inside location-name, so we must
-        # extract location text without the work-model child elements
-        location_raw = None
-        location_el = card.css_first("span.listing__location-name, span.listing__location")
-        if location_el:
-            # Remove work-model children before extracting text
-            for wm_child in location_el.css("span.listing__work-model"):
-                wm_child.decompose()
-            location_raw = location_el.text(strip=True)
-            # Clean any remaining work mode text
-            location_raw = re.sub(
-                r"\s*praca\s*(stacjonarna|zdalna|hybrydowa|mobilna)", "", location_raw, flags=re.IGNORECASE
-            ).strip()
-            location_raw = location_raw.strip(" \t\n\xa0")
-
-        # Secondary details text (contains seniority, employment type, salary)
-        card_text = card.text().lower()
-
-        # Seniority
-        seniority = _detect_seniority(card_text)
-
-        # Employment type — capture all matching types
-        emp_types = []
-        if "umowa o pracę" in card_text and "tymczasow" not in card_text:
-            emp_types.append("UoP")
-        if "umowa o pracę tymczasow" in card_text:
-            emp_types.append("UoP tymczasowa")
-        if "b2b" in card_text or "kontrakt b2b" in card_text:
-            emp_types.append("B2B")
-        if "umowa zleceni" in card_text:
-            emp_types.append("UZ")
-        if "umowa o dzieło" in card_text:
-            emp_types.append("UoD")
-        employment_type = " / ".join(emp_types) if emp_types else None
-
-        # Salary — extract from listing__main-details
-        # The salary is in a pattern like "8 500 - 10 500 zł brutto/mies."
-        # First try to isolate the salary portion from the full details text
-        salary_min, salary_max, currency, period, salary_type = None, None, None, None, None
-        main_details_el = card.css_first(".listing__main-details")
-        if main_details_el:
-            details_text = main_details_el.text(strip=True)
-            # Extract just the salary portion: look for "X zł" or "X EUR" pattern
-            salary_match = re.search(
-                r"([\d\s]+(?:\s*-\s*[\d\s]+)?)\s*(?:zł|PLN|EUR|€|\$|USD|GBP|£|CHF)"
-                r"\s*(?:brutto|netto|na rękę)?/?(?:mies|godz|h|dzień|day|rok|year)?\.?",
-                details_text,
-                re.IGNORECASE,
-            )
-            if salary_match:
-                salary_min, salary_max, currency, period, salary_type = _parse_salary(salary_match.group(0))
-
-        return JobOffer(
+        return [JobOffer(
             source=self.source,
             source_id=source_id,
             source_url=url,
@@ -193,7 +125,129 @@ class PracaPLScraper(BaseScraper):
             salary_max=salary_max,
             salary_currency=currency,
             salary_period=period,
+        )]
+
+    def _parse_multi_location_card(self, card, button_title) -> list[JobOffer]:
+        """Parse a multi-location card with nested location items."""
+        title = button_title.attributes.get("title", "") or button_title.text(strip=True)
+        if not title:
+            return []
+
+        company, work_mode, _, seniority, employment_type, salary_min, salary_max, currency, period = (
+            self._extract_card_fields(card)
         )
+
+        offers = []
+        for loc_item in card.css("ul.listing__locations li.listing__location-item"):
+            loc_link = loc_item.css_first("a[href]")
+            if not loc_link:
+                continue
+            href = loc_link.attributes.get("href", "")
+            source_id = ""
+            observe_btn = loc_item.css_first("button[data-id]")
+            if observe_btn:
+                source_id = observe_btn.attributes.get("data-id", "")
+            if not source_id:
+                match = re.search(r"_(\d{7,10})\.html", href)
+                if not match:
+                    continue
+                source_id = match.group(1)
+
+            location_raw = loc_link.text(strip=True)
+            url = urljoin(self.base_url, href.split("#")[0])
+
+            offers.append(JobOffer(
+                source=self.source,
+                source_id=source_id,
+                source_url=url,
+                title=title,
+                company_name=company,
+                location_raw=location_raw if location_raw else None,
+                work_mode=work_mode,
+                seniority=seniority,
+                employment_type=employment_type,
+                salary_min=salary_min,
+                salary_max=salary_max,
+                salary_currency=currency,
+                salary_period=period,
+            ))
+
+        return offers
+
+    def _extract_card_fields(self, card):
+        """Extract shared fields from a card."""
+        company = None
+        company_el = card.css_first("a.listing__employer-name, .listing__employer-name")
+        if company_el:
+            company = company_el.text(strip=True)
+        if not company:
+            origin_el = card.css_first(".listing__origin")
+            if origin_el:
+                # Company may be plain text (anonymous employer) — first text node
+                node = origin_el.child
+                while node:
+                    if node.tag == "-text":
+                        txt = node.text(strip=True)
+                        if txt and len(txt) > 2:
+                            company = txt
+                            break
+                    node = node.next
+
+        work_mode = WorkMode.UNKNOWN
+        work_mode_el = card.css_first("span.listing__work-model")
+        wm_text = work_mode_el.text().lower() if work_mode_el else ""
+        if not wm_text:
+            wm_text = card.text().lower()
+        if "zdalna" in wm_text or "remote" in wm_text:
+            work_mode = WorkMode.REMOTE
+        elif "hybrydow" in wm_text:
+            work_mode = WorkMode.HYBRID
+        elif "mobilna" in wm_text or "mobiln" in wm_text:
+            work_mode = WorkMode.ONSITE
+        elif "stacjonarn" in wm_text:
+            work_mode = WorkMode.ONSITE
+
+        location_raw = None
+        location_el = card.css_first("span.listing__location-name, span.listing__location")
+        if location_el:
+            for wm_child in location_el.css("span.listing__work-model"):
+                wm_child.decompose()
+            location_raw = location_el.text(strip=True)
+            location_raw = re.sub(
+                r"\s*praca\s*(stacjonarna|zdalna|hybrydowa|mobilna)", "", location_raw, flags=re.IGNORECASE
+            ).strip()
+            location_raw = location_raw.strip(" \t\n\xa0")
+
+        card_text = card.text().lower()
+        seniority = _detect_seniority(card_text)
+
+        emp_types = []
+        if "umowa o pracę" in card_text and "tymczasow" not in card_text:
+            emp_types.append("UoP")
+        if "umowa o pracę tymczasow" in card_text:
+            emp_types.append("UoP tymczasowa")
+        if "b2b" in card_text or "kontrakt b2b" in card_text:
+            emp_types.append("B2B")
+        if "umowa zleceni" in card_text:
+            emp_types.append("UZ")
+        if "umowa o dzieło" in card_text:
+            emp_types.append("UoD")
+        employment_type = " / ".join(emp_types) if emp_types else None
+
+        salary_min, salary_max, currency, period = None, None, None, None
+        main_details_el = card.css_first(".listing__main-details")
+        if main_details_el:
+            details_text = main_details_el.text(strip=True)
+            salary_match = re.search(
+                r"([\d\s]+(?:\s*-\s*[\d\s]+)?)\s*(?:zł|PLN|EUR|€|\$|USD|GBP|£|CHF)"
+                r"\s*(?:brutto|netto|na rękę)?/?(?:mies|godz|h|dzień|day|rok|year)?\.?",
+                details_text,
+                re.IGNORECASE,
+            )
+            if salary_match:
+                salary_min, salary_max, currency, period, _ = _parse_salary(salary_match.group(0))
+
+        return company, work_mode, location_raw, seniority, employment_type, salary_min, salary_max, currency, period
 
     def scrape_detail(self, offer: JobOffer) -> JobOffer:
         """Enrich offer with data from its detail page."""
