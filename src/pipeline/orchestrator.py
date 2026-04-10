@@ -10,14 +10,18 @@ from src.db.queries import insert_scrape_log, upsert_offers
 from src.models.schema import ScrapedResult, ScrapeLogEntry, ScrapeStatus, Source
 from src.pipeline.normalizer import normalize_offers
 from src.scrapers.base import BaseScraper
+from src.scrapers.justjoinit import JustJoinITScraper
 from src.scrapers.pracapl import PracaPLScraper
 from src.scrapers.pracujpl import PracujPLScraper
+from src.scrapers.rocketjobs import RocketJobsScraper
 
 console = Console()
 
 SCRAPER_REGISTRY: dict[Source, type[BaseScraper]] = {
     Source.PRACAPL: PracaPLScraper,
     Source.PRACUJ: PracujPLScraper,
+    Source.JUSTJOINIT: JustJoinITScraper,
+    Source.ROCKETJOBS: RocketJobsScraper,
 }
 
 
