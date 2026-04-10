@@ -1,10 +1,9 @@
-"""Backup DuckDB database.
+"""Backup MySQL database.
 
 Usage:
-    python scripts/backup_db.py                # copy-based backup (always)
-    python scripts/backup_db.py --auto         # backup only if DB changed since last backup
+    python scripts/backup_db.py                # mysqldump-based backup
+    python scripts/backup_db.py --auto         # backup only if enough time passed since last
     python scripts/backup_db.py --interval 6   # min hours between auto-backups (default: 12)
-    python scripts/backup_db.py --export       # SQL export (portable)
     python scripts/backup_db.py --list         # list existing backups
     python scripts/backup_db.py --keep 5       # keep only last N backups (default: 10)
     python scripts/backup_db.py --schedule     # register Windows scheduled task (every 6h)
@@ -14,7 +13,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import hashlib
 import shutil
 import subprocess
 import sys
@@ -23,31 +21,22 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from config.settings import DATA_DIR, DB_PATH
+from config.settings import DATA_DIR, MYSQL_CONFIG
 
 BACKUP_DIR = DATA_DIR / "backups"
 TASK_NAME = "JobDB_AutoBackup"
 
 
-def _db_checksum(db_path: Path) -> str:
-    """Fast MD5 checksum of the database file."""
-    h = hashlib.md5()
-    with open(db_path, "rb") as f:
-        while chunk := f.read(1 << 20):  # 1 MB chunks
-            h.update(chunk)
-    return h.hexdigest()
-
-
 def _latest_backup() -> Path | None:
-    """Return the most recent .duckdb backup, or None."""
+    """Return the most recent .sql backup, or None."""
     if not BACKUP_DIR.exists():
         return None
-    backups = sorted(BACKUP_DIR.glob("jobdb_*.duckdb"), key=lambda p: p.stat().st_mtime, reverse=True)
+    backups = sorted(BACKUP_DIR.glob("jobdb_*.sql"), key=lambda p: p.stat().st_mtime, reverse=True)
     return backups[0] if backups else None
 
 
-def _needs_backup(db_path: Path, interval_hours: float) -> bool:
-    """Check if a new backup is needed (time + content change)."""
+def _needs_backup(interval_hours: float) -> bool:
+    """Check if a new backup is needed (time-based)."""
     latest = _latest_backup()
     if latest is None:
         return True
@@ -58,40 +47,36 @@ def _needs_backup(db_path: Path, interval_hours: float) -> bool:
         print(f"Skipping: last backup is {age_h}h {age_m}m old (interval: {interval_hours}h)")
         return False
 
-    if _db_checksum(db_path) == _db_checksum(latest):
-        print("Skipping: database unchanged since last backup.")
-        return False
-
     return True
 
 
-def backup_copy(db_path: Path = DB_PATH) -> Path:
-    """Create a file-level copy of the database."""
+def backup_dump() -> Path:
+    """Create a mysqldump backup of the database."""
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    dest = BACKUP_DIR / f"jobdb_{timestamp}.duckdb"
-    shutil.copy2(db_path, dest)
+    dest = BACKUP_DIR / f"jobdb_{timestamp}.sql"
+
+    cmd = [
+        "mysqldump",
+        f"--host={MYSQL_CONFIG['host']}",
+        f"--port={MYSQL_CONFIG['port']}",
+        f"--user={MYSQL_CONFIG['user']}",
+        f"--password={MYSQL_CONFIG['password']}",
+        "--single-transaction",
+        "--routines",
+        "--triggers",
+        MYSQL_CONFIG["database"],
+    ]
+    with open(dest, "w", encoding="utf-8") as f:
+        result = subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE, text=True)
+    if result.returncode != 0:
+        print(f"mysqldump error: {result.stderr.strip()}")
+        dest.unlink(missing_ok=True)
+        sys.exit(1)
+
     size_mb = dest.stat().st_size / (1024 * 1024)
     print(f"Backup created: {dest}  ({size_mb:.2f} MB)")
     return dest
-
-
-def backup_export(db_path: Path = DB_PATH) -> Path:
-    """Export database to SQL (schema + data) via DuckDB EXPORT."""
-    import duckdb
-
-    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    export_dir = BACKUP_DIR / f"export_{timestamp}"
-    export_dir.mkdir(parents=True, exist_ok=True)
-
-    conn = duckdb.connect(str(db_path), read_only=True)
-    try:
-        conn.execute(f"EXPORT DATABASE '{export_dir}' (FORMAT CSV)")
-        print(f"SQL export created: {export_dir}")
-    finally:
-        conn.close()
-    return export_dir
 
 
 def list_backups() -> None:
@@ -176,10 +161,9 @@ def unschedule_task() -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Backup DuckDB database")
-    parser.add_argument("--auto", action="store_true", help="Only backup if DB changed and interval passed")
+    parser = argparse.ArgumentParser(description="Backup MySQL database")
+    parser.add_argument("--auto", action="store_true", help="Only backup if interval passed")
     parser.add_argument("--interval", type=float, default=12, help="Min hours between auto-backups (default: 12)")
-    parser.add_argument("--export", action="store_true", help="SQL export instead of file copy")
     parser.add_argument("--list", action="store_true", help="List existing backups")
     parser.add_argument("--keep", type=int, default=10, help="Keep only last N backups (default: 10)")
     parser.add_argument("--schedule", action="store_true", help="Register Windows scheduled task")
@@ -199,17 +183,10 @@ def main() -> None:
         unschedule_task()
         return
 
-    if not DB_PATH.exists():
-        print(f"Database not found: {DB_PATH}")
-        sys.exit(1)
-
-    if args.auto and not _needs_backup(DB_PATH, args.interval):
+    if args.auto and not _needs_backup(args.interval):
         return
 
-    if args.export:
-        backup_export()
-    else:
-        backup_copy()
+    backup_dump()
 
     cleanup_old(keep=args.keep)
 

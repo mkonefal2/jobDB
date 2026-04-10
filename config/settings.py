@@ -3,8 +3,17 @@ from pathlib import Path
 # Paths
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
-DB_PATH = DATA_DIR / "jobdb.duckdb"
+DB_PATH = DATA_DIR / "jobdb.duckdb"  # legacy, kept for data migration
 EXPORTS_DIR = DATA_DIR / "exports"
+
+# MySQL
+MYSQL_CONFIG = {
+    "host": "localhost",
+    "port": 3306,
+    "user": "root",
+    "password": "root",
+    "database": "jobdb",
+}
 
 # Scraping
 DEFAULT_DELAY_SECONDS = 2.0

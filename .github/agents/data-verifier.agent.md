@@ -17,6 +17,7 @@ You verify that scraped data in the DuckDB database matches what's actually on t
 - **Models**: `src/models/schema.py` — Pydantic models with enums (Source, WorkMode, Seniority, etc.)
 - **Pipeline**: `src/pipeline/orchestrator.py` → normalizer → DB upsert
 - **Verification scripts**: `scripts/verify_credibility.py`, `scripts/verify_data.py`
+- **Verification reports**: `docs/verification/` — one Markdown file per verification run
 
 ### Key Database Fields
 | Field | Description | Expected |
@@ -31,12 +32,13 @@ You verify that scraped data in the DuckDB database matches what's actually on t
 | `source_url` | Offer URL | Must resolve (not 404) |
 | `employment_type` | UoP/B2B/UZ | Only captures first type |
 
-### Known Issues (as of verification)
-1. **Location concatenation bug**: "praca mobilna/stacjonarna" gets concatenated with city name (e.g., "Warszawapracamobilna")
-2. **Seniority first-match**: Multi-level specs like "junior/mid/senior" always resolve to first match
-3. **Employment type single-capture**: Only first type captured, alternatives like "UoP / B2B" lose B2B
-4. **Work mode gap**: "praca mobilna" not recognized as a work mode
-5. **Salary parsing edge cases**: Numbers like "2-5000" parsed as salary_min=2
+### Known Issues (as of 2026-04-10)
+1. **Hourly rate decimal parsing**: Polish comma separator (e.g. "35,50 zł/godz.") parsed incorrectly — gets only part after comma (50 instead of 35.50)
+2. **Seniority first-match**: Multi-level specs like "junior/mid/senior" don't always resolve consistently
+3. **Employment type gaps**: "umowa o pracę tymczasową" not recognized; 8 offers with NULL
+4. **Missing city aliases**: Grodzisk Mazowiecki, Rybnik, Siedlce, Piaseczno, Suwałki, Kałuszyn not normalized
+5. **Location concatenation bug**: FIXED — was concatenating work mode with city name
+6. **Work mode gap**: FIXED — "praca mobilna" now recognized
 
 ## Verification Workflow
 
@@ -97,11 +99,15 @@ FROM job_offers;
 - DO NOT guess data — always verify against the live website or database
 - ALWAYS report findings with specific offer IDs and evidence
 - ALWAYS use the verification script as a starting point
+- **ALWAYS save the full verification report** to `docs/verification/YYYY-MM-DD.md` (using current date). If multiple runs on the same day, append a suffix (e.g. `2026-04-10-2.md`)
+- **ALWAYS include a Recommendations section** at the end of the saved report with prioritized fixes ([HIGH], [MEDIUM], [LOW])
+- Before writing a new report, check `docs/verification/` for the latest report and compare with previous findings — note which issues are new, recurring, or fixed
 
 ## Output Format
-When reporting, use this structure:
+When reporting, use this structure (both in chat AND in the saved file):
 1. **Summary** — Overall credibility score (X/10) + key findings
 2. **Coverage Table** — Field-by-field coverage percentages
 3. **Issues Found** — Categorized by severity (HIGH/MEDIUM/LOW)
 4. **Sample Comparisons** — Specific offer comparisons: DB vs Website
-5. **Recommendations** — Prioritized list of fixes
+5. **Fixed since last report** — Issues that were present before but are now resolved
+6. **Recommendations** — Prioritized list of fixes with severity tags

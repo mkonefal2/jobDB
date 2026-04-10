@@ -162,7 +162,7 @@ import pandas as pd
 comp_df = pd.DataFrame(COMPONENTS, columns=["Komponent", "Status", "Lokalizacja"])
 st.dataframe(
     comp_df,
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
     column_config={
         "Komponent": st.column_config.TextColumn("Komponent", width="medium"),
@@ -263,7 +263,7 @@ fig = ff.create_gantt(
     title="",
 )
 fig.update_layout(height=600, xaxis_title="", yaxis_title="")
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width="stretch")
 
 st.divider()
 

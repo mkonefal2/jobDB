@@ -1,6 +1,6 @@
 """
 Automated data credibility verification for praca.pl scraper.
-Compares scraped data from DuckDB with live website data via Playwright.
+Compares scraped data from MySQL with live website data via Playwright.
 """
 
 import sys
@@ -14,38 +14,44 @@ from src.db.database import get_connection
 def get_db_stats():
     """Get comprehensive stats from scraped data."""
     conn = get_connection()
+    cur = conn.cursor()
     stats = {}
 
-    stats["total"] = conn.execute("SELECT count(*) FROM job_offers").fetchone()[0]
-    stats["active"] = conn.execute("SELECT count(*) FROM job_offers WHERE is_active").fetchone()[0]
-    stats["with_salary"] = conn.execute("SELECT count(*) FROM job_offers WHERE salary_min IS NOT NULL").fetchone()[0]
-    stats["with_company"] = conn.execute(
-        "SELECT count(*) FROM job_offers WHERE company_name IS NOT NULL AND company_name != ''"
-    ).fetchone()[0]
-    stats["with_location"] = conn.execute(
-        "SELECT count(*) FROM job_offers WHERE location_raw IS NOT NULL AND location_raw != ''"
-    ).fetchone()[0]
-    stats["with_work_mode"] = conn.execute("SELECT count(*) FROM job_offers WHERE work_mode != 'unknown'").fetchone()[0]
-    stats["with_seniority"] = conn.execute("SELECT count(*) FROM job_offers WHERE seniority != 'unknown'").fetchone()[0]
-    stats["with_employment"] = conn.execute(
-        "SELECT count(*) FROM job_offers WHERE employment_type IS NOT NULL"
-    ).fetchone()[0]
+    cur.execute("SELECT count(*) FROM job_offers")
+    stats["total"] = cur.fetchone()[0]
+    cur.execute("SELECT count(*) FROM job_offers WHERE is_active")
+    stats["active"] = cur.fetchone()[0]
+    cur.execute("SELECT count(*) FROM job_offers WHERE salary_min IS NOT NULL")
+    stats["with_salary"] = cur.fetchone()[0]
+    cur.execute("SELECT count(*) FROM job_offers WHERE company_name IS NOT NULL AND company_name != ''")
+    stats["with_company"] = cur.fetchone()[0]
+    cur.execute("SELECT count(*) FROM job_offers WHERE location_raw IS NOT NULL AND location_raw != ''")
+    stats["with_location"] = cur.fetchone()[0]
+    cur.execute("SELECT count(*) FROM job_offers WHERE work_mode != 'unknown'")
+    stats["with_work_mode"] = cur.fetchone()[0]
+    cur.execute("SELECT count(*) FROM job_offers WHERE seniority != 'unknown'")
+    stats["with_seniority"] = cur.fetchone()[0]
+    cur.execute("SELECT count(*) FROM job_offers WHERE employment_type IS NOT NULL")
+    stats["with_employment"] = cur.fetchone()[0]
 
+    cur.close()
     return stats
 
 
 def check_data_quality():
     """Identify specific data quality issues."""
     conn = get_connection()
+    cur = conn.cursor()
     issues = []
 
-    # 1. Location concatenation bug (e.g., "Warszawapracamobilna")
-    bad_locs = conn.execute("""
+    # 1. Location concatenation bug
+    cur.execute("""
         SELECT source_id, title, location_raw FROM job_offers
         WHERE location_raw LIKE '%pracamobiln%'
            OR location_raw LIKE '%pracastajonar%'
            OR location_raw LIKE '%pracahy%'
-    """).fetchall()
+    """)
+    bad_locs = cur.fetchall()
     for r in bad_locs:
         issues.append(
             {
@@ -58,11 +64,12 @@ def check_data_quality():
             }
         )
 
-    # 2. Salary range sanity (min > max, or unreasonable values)
-    bad_salary = conn.execute("""
+    # 2. Salary range sanity
+    cur.execute("""
         SELECT source_id, title, salary_min, salary_max, salary_currency FROM job_offers
         WHERE salary_min IS NOT NULL AND (salary_min > salary_max OR salary_min < 10 OR salary_max > 200000)
-    """).fetchall()
+    """)
+    bad_salary = cur.fetchall()
     for r in bad_salary:
         issues.append(
             {
@@ -76,10 +83,11 @@ def check_data_quality():
         )
 
     # 3. Missing city normalization
-    no_city = conn.execute("""
+    cur.execute("""
         SELECT count(*) FROM job_offers
         WHERE location_raw IS NOT NULL AND location_raw != '' AND location_city IS NULL
-    """).fetchone()[0]
+    """)
+    no_city = cur.fetchone()[0]
     if no_city > 0:
         issues.append(
             {
@@ -90,11 +98,12 @@ def check_data_quality():
             }
         )
 
-    # 4. Seniority false positives (e.g., "senior" in "senior / mid" → detected as senior only)
-    false_sen = conn.execute("""
+    # 4. Seniority false positives
+    cur.execute("""
         SELECT source_id, title, seniority FROM job_offers
         WHERE title LIKE '%junior%' AND seniority != 'junior'
-    """).fetchall()
+    """)
+    false_sen = cur.fetchall()
     for r in false_sen:
         issues.append(
             {
@@ -108,10 +117,11 @@ def check_data_quality():
         )
 
     # 5. Duplicate source_ids
-    dupes = conn.execute("""
+    cur.execute("""
         SELECT source_id, count(*) as cnt FROM job_offers
         GROUP BY source_id HAVING cnt > 1
-    """).fetchall()
+    """)
+    dupes = cur.fetchall()
     for r in dupes:
         issues.append(
             {
@@ -124,9 +134,10 @@ def check_data_quality():
         )
 
     # 6. Empty titles
-    empty_titles = conn.execute("""
-        SELECT count(*) FROM job_offers WHERE title IS NULL OR title = '' OR length(title) < 3
-    """).fetchone()[0]
+    cur.execute("""
+        SELECT count(*) FROM job_offers WHERE title IS NULL OR title = '' OR CHAR_LENGTH(title) < 3
+    """)
+    empty_titles = cur.fetchone()[0]
     if empty_titles > 0:
         issues.append(
             {
@@ -138,10 +149,11 @@ def check_data_quality():
         )
 
     # 7. Invalid URLs
-    bad_urls = conn.execute("""
+    cur.execute("""
         SELECT count(*) FROM job_offers
-        WHERE source_url NOT LIKE 'https://www.praca.pl/%'
-    """).fetchone()[0]
+        WHERE source_url NOT LIKE 'https://www.praca.pl/%%'
+    """)
+    bad_urls = cur.fetchone()[0]
     if bad_urls > 0:
         issues.append(
             {
@@ -152,6 +164,7 @@ def check_data_quality():
             }
         )
 
+    cur.close()
     return issues
 
 
@@ -220,14 +233,17 @@ def generate_report():
     ]
 
     for sid, expected in test_offers:
-        row = conn.execute(
+        cur = conn.cursor()
+        cur.execute(
             """
             SELECT title, company_name, location_raw, salary_min, salary_max,
                    work_mode, seniority, employment_type
-            FROM job_offers WHERE source_id = ?
+            FROM job_offers WHERE source_id = %s
         """,
-            [sid],
-        ).fetchone()
+            (sid,),
+        )
+        row = cur.fetchone()
+        cur.close()
         if not row:
             print(f"\n  Oferta {sid}: NIE ZNALEZIONA W BAZIE")
             continue

@@ -2,91 +2,102 @@ from __future__ import annotations
 
 from src.db.database import get_connection
 
-SCHEMA_SQL = """
-CREATE TABLE IF NOT EXISTS job_offers (
-    id                VARCHAR PRIMARY KEY,
-    source            VARCHAR NOT NULL,
-    source_id         VARCHAR NOT NULL,
-    source_url        VARCHAR NOT NULL,
-    title             VARCHAR NOT NULL,
-    company_name      VARCHAR,
+SCHEMA_SQLS = [
+    """
+    CREATE TABLE IF NOT EXISTS job_offers (
+        id                VARCHAR(64) PRIMARY KEY,
+        source            VARCHAR(50) NOT NULL,
+        source_id         VARCHAR(255) NOT NULL,
+        source_url        VARCHAR(2048) NOT NULL,
+        title             VARCHAR(500) NOT NULL,
+        company_name      VARCHAR(500),
 
-    location_raw      VARCHAR,
-    location_city     VARCHAR,
-    location_region   VARCHAR,
-    work_mode         VARCHAR DEFAULT 'unknown',
+        location_raw      VARCHAR(500),
+        location_city     VARCHAR(255),
+        location_region   VARCHAR(255),
+        work_mode         VARCHAR(50) DEFAULT 'unknown',
 
-    seniority         VARCHAR DEFAULT 'unknown',
-    employment_type   VARCHAR,
+        seniority         VARCHAR(50) DEFAULT 'unknown',
+        employment_type   VARCHAR(100),
 
-    salary_min        DOUBLE,
-    salary_max        DOUBLE,
-    salary_currency   VARCHAR,
-    salary_period     VARCHAR,
-    salary_type       VARCHAR,
+        salary_min        DOUBLE,
+        salary_max        DOUBLE,
+        salary_currency   VARCHAR(10),
+        salary_period     VARCHAR(20),
+        salary_type       VARCHAR(20),
 
-    category          VARCHAR,
-    technologies      VARCHAR[],
-    description_text  VARCHAR,
+        category          VARCHAR(255),
+        technologies      JSON,
+        description_text  LONGTEXT,
 
-    published_at      TIMESTAMP,
-    first_seen_at     TIMESTAMP NOT NULL DEFAULT current_timestamp,
-    last_seen_at      TIMESTAMP NOT NULL DEFAULT current_timestamp,
-    is_active         BOOLEAN DEFAULT true,
-    scraped_at        TIMESTAMP NOT NULL,
-    dedup_cluster_id  VARCHAR,
+        published_at      DATETIME,
+        first_seen_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        last_seen_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        is_active         BOOLEAN DEFAULT true,
+        scraped_at        DATETIME NOT NULL,
+        dedup_cluster_id  VARCHAR(64),
 
-    UNIQUE (source, source_id)
-);
-
-CREATE TABLE IF NOT EXISTS job_snapshots (
-    snapshot_date  DATE NOT NULL,
-    offer_id       VARCHAR NOT NULL,
-    salary_min     DOUBLE,
-    salary_max     DOUBLE,
-    is_active      BOOLEAN NOT NULL,
-    PRIMARY KEY (snapshot_date, offer_id)
-);
-
-CREATE TABLE IF NOT EXISTS daily_stats (
-    stat_date          DATE NOT NULL,
-    source             VARCHAR NOT NULL,
-    category           VARCHAR,
-    location_city      VARCHAR,
-    total_offers       INTEGER DEFAULT 0,
-    offers_with_salary INTEGER DEFAULT 0,
-    avg_salary_min     DOUBLE,
-    avg_salary_max     DOUBLE,
-    new_offers         INTEGER DEFAULT 0,
-    expired_offers     INTEGER DEFAULT 0,
-    PRIMARY KEY (stat_date, source, category, location_city)
-);
-
-CREATE TABLE IF NOT EXISTS scrape_log (
-    run_id          VARCHAR NOT NULL,
-    source          VARCHAR NOT NULL,
-    started_at      TIMESTAMP NOT NULL,
-    finished_at     TIMESTAMP,
-    offers_scraped  INTEGER DEFAULT 0,
-    offers_new      INTEGER DEFAULT 0,
-    offers_updated  INTEGER DEFAULT 0,
-    errors          INTEGER DEFAULT 0,
-    status          VARCHAR DEFAULT 'success'
-);
-"""
+        UNIQUE KEY uq_source_source_id (source, source_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS job_snapshots (
+        snapshot_date  DATE NOT NULL,
+        offer_id       VARCHAR(64) NOT NULL,
+        salary_min     DOUBLE,
+        salary_max     DOUBLE,
+        is_active      BOOLEAN NOT NULL,
+        PRIMARY KEY (snapshot_date, offer_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS daily_stats (
+        stat_date          DATE NOT NULL,
+        source             VARCHAR(50) NOT NULL,
+        category           VARCHAR(255) NOT NULL DEFAULT '',
+        location_city      VARCHAR(255) NOT NULL DEFAULT '',
+        total_offers       INT DEFAULT 0,
+        offers_with_salary INT DEFAULT 0,
+        avg_salary_min     DOUBLE,
+        avg_salary_max     DOUBLE,
+        new_offers         INT DEFAULT 0,
+        expired_offers     INT DEFAULT 0,
+        PRIMARY KEY (stat_date, source, category, location_city)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS scrape_log (
+        run_id          VARCHAR(64) NOT NULL,
+        source          VARCHAR(50) NOT NULL,
+        started_at      DATETIME NOT NULL,
+        finished_at     DATETIME,
+        offers_scraped  INT DEFAULT 0,
+        offers_new      INT DEFAULT 0,
+        offers_updated  INT DEFAULT 0,
+        errors          INT DEFAULT 0,
+        status          VARCHAR(50) DEFAULT 'success',
+        KEY idx_scrape_log_started (started_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    """,
+]
 
 
 def init_db() -> None:
     conn = get_connection()
-    conn.execute(SCHEMA_SQL)
+    cursor = conn.cursor()
+    for sql in SCHEMA_SQLS:
+        cursor.execute(sql)
     conn.commit()
+    cursor.close()
 
 
 def drop_all() -> None:
     conn = get_connection()
+    cursor = conn.cursor()
     for table in ["scrape_log", "daily_stats", "job_snapshots", "job_offers"]:
-        conn.execute(f"DROP TABLE IF EXISTS {table}")
+        cursor.execute(f"DROP TABLE IF EXISTS {table}")
     conn.commit()
+    cursor.close()
 
 
 if __name__ == "__main__":

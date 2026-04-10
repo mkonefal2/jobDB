@@ -1,6 +1,6 @@
 """
 Automated data credibility verification for pracuj.pl scraper.
-Compares scraped data from DuckDB with live website data.
+Compares scraped data from MySQL with live website data.
 """
 
 import json
@@ -15,54 +15,51 @@ from src.db.database import get_connection
 def get_db_stats():
     """Get comprehensive stats from scraped pracuj.pl data."""
     conn = get_connection()
+    cur = conn.cursor()
     stats = {}
 
     base_filter = "WHERE source = 'pracuj'"
 
-    stats["total"] = conn.execute(f"SELECT count(*) FROM job_offers {base_filter}").fetchone()[0]
-    stats["active"] = conn.execute(
-        f"SELECT count(*) FROM job_offers {base_filter} AND is_active"
-    ).fetchone()[0]
-    stats["with_salary"] = conn.execute(
-        f"SELECT count(*) FROM job_offers {base_filter} AND salary_min IS NOT NULL"
-    ).fetchone()[0]
-    stats["with_company"] = conn.execute(
-        f"SELECT count(*) FROM job_offers {base_filter} AND company_name IS NOT NULL AND company_name != ''"
-    ).fetchone()[0]
-    stats["with_location"] = conn.execute(
-        f"SELECT count(*) FROM job_offers {base_filter} AND location_raw IS NOT NULL AND location_raw != ''"
-    ).fetchone()[0]
-    stats["with_city"] = conn.execute(
-        f"SELECT count(*) FROM job_offers {base_filter} AND location_city IS NOT NULL AND location_city != ''"
-    ).fetchone()[0]
-    stats["with_work_mode"] = conn.execute(
-        f"SELECT count(*) FROM job_offers {base_filter} AND work_mode != 'unknown'"
-    ).fetchone()[0]
-    stats["with_seniority"] = conn.execute(
-        f"SELECT count(*) FROM job_offers {base_filter} AND seniority != 'unknown'"
-    ).fetchone()[0]
-    stats["with_employment"] = conn.execute(
-        f"SELECT count(*) FROM job_offers {base_filter} AND employment_type IS NOT NULL"
-    ).fetchone()[0]
+    cur.execute(f"SELECT count(*) FROM job_offers {base_filter}")
+    stats["total"] = cur.fetchone()[0]
+    cur.execute(f"SELECT count(*) FROM job_offers {base_filter} AND is_active")
+    stats["active"] = cur.fetchone()[0]
+    cur.execute(f"SELECT count(*) FROM job_offers {base_filter} AND salary_min IS NOT NULL")
+    stats["with_salary"] = cur.fetchone()[0]
+    cur.execute(f"SELECT count(*) FROM job_offers {base_filter} AND company_name IS NOT NULL AND company_name != ''")
+    stats["with_company"] = cur.fetchone()[0]
+    cur.execute(f"SELECT count(*) FROM job_offers {base_filter} AND location_raw IS NOT NULL AND location_raw != ''")
+    stats["with_location"] = cur.fetchone()[0]
+    cur.execute(f"SELECT count(*) FROM job_offers {base_filter} AND location_city IS NOT NULL AND location_city != ''")
+    stats["with_city"] = cur.fetchone()[0]
+    cur.execute(f"SELECT count(*) FROM job_offers {base_filter} AND work_mode != 'unknown'")
+    stats["with_work_mode"] = cur.fetchone()[0]
+    cur.execute(f"SELECT count(*) FROM job_offers {base_filter} AND seniority != 'unknown'")
+    stats["with_seniority"] = cur.fetchone()[0]
+    cur.execute(f"SELECT count(*) FROM job_offers {base_filter} AND employment_type IS NOT NULL")
+    stats["with_employment"] = cur.fetchone()[0]
 
+    cur.close()
     return stats
 
 
 def check_data_quality():
     """Identify specific data quality issues for pracuj.pl data."""
     conn = get_connection()
+    cur = conn.cursor()
     issues = []
 
     base_filter = "source = 'pracuj'"
 
-    # 1. Salary range sanity (min > max, or unreasonable values)
-    bad_salary = conn.execute(f"""
+    # 1. Salary range sanity
+    cur.execute(f"""
         SELECT source_id, title, salary_min, salary_max, salary_currency, salary_period
         FROM job_offers
         WHERE {base_filter}
           AND salary_min IS NOT NULL
           AND (salary_min > salary_max OR salary_min < 10 OR salary_max > 500000)
-    """).fetchall()
+    """)
+    bad_salary = cur.fetchall()
     for r in bad_salary:
         issues.append({
             "type": "salary_anomaly",
@@ -74,17 +71,19 @@ def check_data_quality():
         })
 
     # 2. Missing city normalization
-    no_city = conn.execute(f"""
+    cur.execute(f"""
         SELECT count(*) FROM job_offers
         WHERE {base_filter}
           AND location_raw IS NOT NULL AND location_raw != ''
           AND location_city IS NULL
-    """).fetchone()[0]
+    """)
+    no_city = cur.fetchone()[0]
     if no_city > 0:
-        total_with_loc = conn.execute(f"""
+        cur.execute(f"""
             SELECT count(*) FROM job_offers
             WHERE {base_filter} AND location_raw IS NOT NULL AND location_raw != ''
-        """).fetchone()[0]
+        """)
+        total_with_loc = cur.fetchone()[0]
         pct = 100 * no_city / total_with_loc if total_with_loc else 0
         issues.append({
             "type": "missing_city_norm",
@@ -94,11 +93,12 @@ def check_data_quality():
         })
 
     # 3. Duplicate source_ids
-    dupes = conn.execute(f"""
+    cur.execute(f"""
         SELECT source_id, count(*) as cnt FROM job_offers
         WHERE {base_filter}
         GROUP BY source_id HAVING cnt > 1
-    """).fetchall()
+    """)
+    dupes = cur.fetchall()
     for r in dupes:
         issues.append({
             "type": "duplicate_source_id",
@@ -109,10 +109,11 @@ def check_data_quality():
         })
 
     # 4. Empty titles
-    empty_titles = conn.execute(f"""
+    cur.execute(f"""
         SELECT count(*) FROM job_offers
-        WHERE {base_filter} AND (title IS NULL OR title = '' OR length(title) < 3)
-    """).fetchone()[0]
+        WHERE {base_filter} AND (title IS NULL OR title = '' OR CHAR_LENGTH(title) < 3)
+    """)
+    empty_titles = cur.fetchone()[0]
     if empty_titles > 0:
         issues.append({
             "type": "empty_title",
@@ -121,11 +122,12 @@ def check_data_quality():
             "description": f"{empty_titles} offers have empty or very short titles",
         })
 
-    # 5. Invalid URLs (not matching pracuj.pl pattern)
-    bad_urls = conn.execute(f"""
+    # 5. Invalid URLs
+    cur.execute(f"""
         SELECT count(*) FROM job_offers
-        WHERE {base_filter} AND source_url NOT LIKE 'https://www.pracuj.pl/%'
-    """).fetchone()[0]
+        WHERE {base_filter} AND source_url NOT LIKE 'https://www.pracuj.pl/%%'
+    """)
+    bad_urls = cur.fetchone()[0]
     if bad_urls > 0:
         issues.append({
             "type": "invalid_url",
@@ -135,11 +137,13 @@ def check_data_quality():
         })
 
     # 6. Work mode all unknown
-    unknown_wm = conn.execute(f"""
+    cur.execute(f"""
         SELECT count(*) FROM job_offers
         WHERE {base_filter} AND work_mode = 'unknown'
-    """).fetchone()[0]
-    total = conn.execute(f"SELECT count(*) FROM job_offers WHERE {base_filter}").fetchone()[0]
+    """)
+    unknown_wm = cur.fetchone()[0]
+    cur.execute(f"SELECT count(*) FROM job_offers WHERE {base_filter}")
+    total = cur.fetchone()[0]
     if total > 0 and unknown_wm / total > 0.5:
         issues.append({
             "type": "mostly_unknown_work_mode",
@@ -149,10 +153,11 @@ def check_data_quality():
         })
 
     # 7. Salary type missing when salary present
-    no_type = conn.execute(f"""
+    cur.execute(f"""
         SELECT count(*) FROM job_offers
         WHERE {base_filter} AND salary_min IS NOT NULL AND salary_type IS NULL
-    """).fetchone()[0]
+    """)
+    no_type = cur.fetchone()[0]
     if no_type > 0:
         issues.append({
             "type": "salary_missing_type",
@@ -161,15 +166,17 @@ def check_data_quality():
             "description": f"{no_type} offers have salary but no brutto/netto type",
         })
 
+    cur.close()
     return issues
 
 
 def verify_sample_offers():
     """Verify a few sample offers against live data using Playwright."""
     conn = get_connection()
+    cur = conn.cursor()
 
     # Get a sample of offers with salary to verify
-    samples = conn.execute("""
+    cur.execute("""
         SELECT source_id, title, company_name, location_raw, salary_min, salary_max,
                salary_currency, salary_period, work_mode, seniority, employment_type,
                source_url
@@ -177,8 +184,9 @@ def verify_sample_offers():
         WHERE source = 'pracuj' AND salary_min IS NOT NULL
         ORDER BY scraped_at DESC
         LIMIT 5
-    """).fetchall()
-    conn.close()
+    """)
+    samples = cur.fetchall()
+    cur.close()
 
     if not samples:
         print("  No offers with salary found for verification")
@@ -330,13 +338,15 @@ def generate_report():
 
     # Sample data preview
     conn = get_connection()
+    cur = conn.cursor()
     print("\n📋 PRÓBKA DANYCH:")
-    samples = conn.execute("""
+    cur.execute("""
         SELECT source_id, title, company_name, location_raw, location_city,
                salary_min, salary_max, salary_currency, work_mode, seniority, employment_type
         FROM job_offers WHERE source = 'pracuj'
-        ORDER BY RANDOM() LIMIT 5
-    """).fetchall()
+        ORDER BY RAND() LIMIT 5
+    """)
+    samples = cur.fetchall()
     for s in samples:
         sid, title, comp, loc_r, loc_c, smin, smax, scur, wm, sen, emp = s
         sal_str = f"{smin}-{smax} {scur}" if smin else "brak"

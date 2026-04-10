@@ -15,20 +15,30 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-import duckdb
+import mysql.connector
 import plotly.express as px
 import polars as pl
 
-DB_PATH = PROJECT_ROOT / "data" / "jobdb.duckdb"
-
-
-@st.cache_resource
-def get_conn():
-    return duckdb.connect(str(DB_PATH), read_only=True)
+from config.settings import MYSQL_CONFIG
 
 
 def query(sql: str) -> pl.DataFrame:
-    return get_conn().execute(sql).pl()
+    try:
+        conn = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = conn.cursor()
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        if not rows:
+            cursor.close()
+            conn.close()
+            return pl.DataFrame()
+        columns = [desc[0] for desc in cursor.description]
+        cursor.close()
+        conn.close()
+        return pl.DataFrame(rows, schema=columns, orient="row")
+    except mysql.connector.Error as e:
+        st.error(f"Błąd bazy danych: {e}")
+        return pl.DataFrame()
 
 
 # ── Sidebar ──────────────────────────────────────────────────────────────────
@@ -37,20 +47,20 @@ with st.sidebar:
     st.caption("Polski rynek pracy — dane z portali")
 
     # Filters
-    sources = query("SELECT DISTINCT source FROM job_offers ORDER BY 1")["source"].to_list()
+    _src_df = query("SELECT DISTINCT source FROM job_offers ORDER BY 1")
+    sources = _src_df["source"].to_list() if _src_df.height > 0 else []
     selected_sources = st.multiselect("Źródło", sources, default=sources)
 
-    cities = query("SELECT DISTINCT location_city FROM job_offers WHERE location_city IS NOT NULL ORDER BY 1")[
-        "location_city"
-    ].to_list()
+    _city_df = query("SELECT DISTINCT location_city FROM job_offers WHERE location_city IS NOT NULL ORDER BY 1")
+    cities = _city_df["location_city"].to_list() if _city_df.height > 0 else []
     selected_cities = st.multiselect("Miasto", cities, default=[])
 
-    work_modes = query("SELECT DISTINCT work_mode FROM job_offers ORDER BY 1")["work_mode"].to_list()
+    _mode_df = query("SELECT DISTINCT work_mode FROM job_offers ORDER BY 1")
+    work_modes = _mode_df["work_mode"].to_list() if _mode_df.height > 0 else []
     selected_modes = st.multiselect("Tryb pracy", work_modes, default=[])
 
-    seniority_opts = query("SELECT DISTINCT seniority FROM job_offers WHERE seniority != 'unknown' ORDER BY 1")[
-        "seniority"
-    ].to_list()
+    _sen_df = query("SELECT DISTINCT seniority FROM job_offers WHERE seniority != 'unknown' ORDER BY 1")
+    seniority_opts = _sen_df["seniority"].to_list() if _sen_df.height > 0 else []
     selected_seniority = st.multiselect("Poziom", seniority_opts, default=[])
 
     st.divider()
@@ -87,18 +97,24 @@ st.title("📊 Przegląd rynku pracy")
 kpi = query(f"""
     SELECT
         count(*) as total,
-        count(*) FILTER (WHERE salary_min IS NOT NULL) as with_salary,
-        count(DISTINCT company_name) FILTER (WHERE company_name IS NOT NULL) as companies,
-        count(DISTINCT location_city) FILTER (WHERE location_city IS NOT NULL) as cities
+        SUM(CASE WHEN salary_min IS NOT NULL THEN 1 ELSE 0 END) as with_salary,
+        count(DISTINCT CASE WHEN company_name IS NOT NULL THEN company_name END) as companies,
+        count(DISTINCT CASE WHEN location_city IS NOT NULL THEN location_city END) as cities
     FROM job_offers
     WHERE {WHERE}
 """)
 
 c1, c2, c3, c4 = st.columns(4)
-c1.metric("Aktywne oferty", f"{kpi['total'][0]:,}")
-c2.metric("Z wynagrodzeniem", f"{kpi['with_salary'][0]:,}")
-c3.metric("Firmy", f"{kpi['companies'][0]:,}")
-c4.metric("Miasta", f"{kpi['cities'][0]:,}")
+if kpi.height > 0:
+    c1.metric("Aktywne oferty", f"{kpi['total'][0]:,}")
+    c2.metric("Z wynagrodzeniem", f"{kpi['with_salary'][0]:,}")
+    c3.metric("Firmy", f"{kpi['companies'][0]:,}")
+    c4.metric("Miasta", f"{kpi['cities'][0]:,}")
+else:
+    c1.metric("Aktywne oferty", 0)
+    c2.metric("Z wynagrodzeniem", 0)
+    c3.metric("Firmy", 0)
+    c4.metric("Miasta", 0)
 
 st.divider()
 
@@ -191,8 +207,8 @@ with col2_right:
 st.subheader("🌐 Oferty wg źródła")
 src_df = query(f"""
     SELECT source as zrodlo, count(*) as oferty,
-           count(*) FILTER (WHERE salary_min IS NOT NULL) as z_wynagrodzeniem,
-           count(*) FILTER (WHERE company_name IS NOT NULL) as z_firma
+           SUM(CASE WHEN salary_min IS NOT NULL THEN 1 ELSE 0 END) as z_wynagrodzeniem,
+           SUM(CASE WHEN company_name IS NOT NULL THEN 1 ELSE 0 END) as z_firma
     FROM job_offers
     WHERE {WHERE}
     GROUP BY 1 ORDER BY 2 DESC
@@ -216,7 +232,7 @@ st.subheader("🏢 Top pracodawcy")
 top_companies = query(f"""
     SELECT company_name as firma, count(*) as oferty,
            count(DISTINCT location_city) as miasta,
-           mode(work_mode) as tryb
+           (SELECT wm.work_mode FROM job_offers wm WHERE wm.company_name = job_offers.company_name GROUP BY wm.work_mode ORDER BY count(*) DESC LIMIT 1) as tryb
     FROM job_offers
     WHERE {WHERE} AND company_name IS NOT NULL
     GROUP BY 1 ORDER BY 2 DESC LIMIT 20
@@ -236,13 +252,13 @@ st.subheader("📋 Lista ofert")
 
 search = st.text_input("🔎 Szukaj w tytułach", "")
 search_safe = search.replace("'", "''").replace("%", "\\%").replace("_", "\\_") if search else ""
-search_clause = f"AND title ILIKE '%{search_safe}%'" if search else ""
+search_clause = f"AND LOWER(title) LIKE LOWER('%{search_safe}%')" if search else ""
 
 offers_df = query(f"""
     SELECT title as tytul, company_name as firma, location_city as miasto,
            work_mode as tryb, seniority as poziom, employment_type as umowa,
            CASE WHEN salary_min IS NOT NULL
-                THEN salary_min || ' - ' || salary_max || ' ' || COALESCE(salary_currency, '')
+                THEN CONCAT(salary_min, ' - ', salary_max, ' ', COALESCE(salary_currency, ''))
                 ELSE '' END as wynagrodzenie,
            source as zrodlo, source_url as link
     FROM job_offers
