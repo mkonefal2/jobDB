@@ -138,12 +138,19 @@ def schedule_task(interval_hours: int = 6) -> None:
     script_path = Path(__file__).resolve()
 
     cmd = [
-        "schtasks", "/Create", "/F",
-        "/TN", TASK_NAME,
-        "/TR", f'"{python_exe}" "{script_path}" --auto --interval {interval_hours}',
-        "/SC", "HOURLY",
-        "/MO", str(interval_hours),
-        "/ST", "00:00",
+        "schtasks",
+        "/Create",
+        "/F",
+        "/TN",
+        TASK_NAME,
+        "/TR",
+        f'"{python_exe}" "{script_path}" --auto --interval {interval_hours}',
+        "/SC",
+        "HOURLY",
+        "/MO",
+        str(interval_hours),
+        "/ST",
+        "00:00",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode == 0:
@@ -159,7 +166,8 @@ def unschedule_task() -> None:
     """Remove the Windows scheduled task."""
     result = subprocess.run(
         ["schtasks", "/Delete", "/TN", TASK_NAME, "/F"],
-        capture_output=True, text=True,
+        capture_output=True,
+        text=True,
     )
     if result.returncode == 0:
         print(f"Scheduled task '{TASK_NAME}' removed.")
