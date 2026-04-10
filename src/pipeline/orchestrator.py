@@ -10,6 +10,7 @@ from src.db.queries import insert_scrape_log, upsert_offers
 from src.models.schema import ScrapedResult, ScrapeLogEntry, ScrapeStatus, Source
 from src.pipeline.normalizer import normalize_offers
 from src.scrapers.base import BaseScraper
+from src.scrapers.jooble import JoobleScraper
 from src.scrapers.justjoinit import JustJoinITScraper
 from src.scrapers.pracapl import PracaPLScraper
 from src.scrapers.pracujpl import PracujPLScraper
@@ -22,6 +23,7 @@ SCRAPER_REGISTRY: dict[Source, type[BaseScraper]] = {
     Source.PRACUJ: PracujPLScraper,
     Source.JUSTJOINIT: JustJoinITScraper,
     Source.ROCKETJOBS: RocketJobsScraper,
+    Source.JOOBLE: JoobleScraper,
 }
 
 
@@ -72,7 +74,7 @@ def run_pipeline(
                 normalized = normalize_offers(result.offers)
 
                 # Store
-                console.print("  Storing to DuckDB...")
+                console.print("  Storing to MySQL...")
                 new_count, updated_count = upsert_offers(normalized)
 
                 log_entry.offers_scraped = len(normalized)
