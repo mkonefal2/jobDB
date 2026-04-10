@@ -1,0 +1,41 @@
+[project]
+name = "jobdb"
+version = "0.1.0"
+description = "SteamDB-style job market tracker for Polish job portals"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx[http2]>=0.27",
+    "selectolax>=0.3",
+    "playwright>=1.40",
+    "duckdb>=1.0",
+    "pydantic>=2.5",
+    "polars>=1.0",
+    "streamlit>=1.35",
+    "plotly>=5.20",
+    "rapidfuzz>=3.6",
+    "tenacity>=8.2",
+    "rich>=13.7",
+    "schedule>=1.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.4",
+    "pre-commit>=4.0",
+]
+
+[project.scripts]
+jobdb-scrape = "scripts.run_scraper:main"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*.py" = ["E402"]
+"src/dashboard/**/*.py" = ["E402", "N999"]
