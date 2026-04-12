@@ -10,7 +10,6 @@ from src.db.queries import insert_scrape_log, upsert_offers
 from src.models.schema import ScrapedResult, ScrapeLogEntry, ScrapeStatus, Source
 from src.pipeline.normalizer import normalize_offers
 from src.scrapers.base import BaseScraper
-from src.scrapers.jooble import JoobleScraper
 from src.scrapers.justjoinit import JustJoinITScraper
 from src.scrapers.pracapl import PracaPLScraper
 from src.scrapers.pracujpl import PracujPLScraper
@@ -23,7 +22,7 @@ SCRAPER_REGISTRY: dict[Source, type[BaseScraper]] = {
     Source.PRACUJ: PracujPLScraper,
     Source.JUSTJOINIT: JustJoinITScraper,
     Source.ROCKETJOBS: RocketJobsScraper,
-    Source.JOOBLE: JoobleScraper,
+    # Jooble disabled — aggregator that duplicates offers from primary sources
 }
 
 

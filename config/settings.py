@@ -3,7 +3,6 @@ from pathlib import Path
 # Paths
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
-DB_PATH = DATA_DIR / "jobdb.duckdb"  # legacy, kept for data migration
 EXPORTS_DIR = DATA_DIR / "exports"
 
 # MySQL
@@ -48,9 +47,10 @@ SOURCES = {
         "base_url": "https://www.pracuj.pl",
         "delay": 3.0,
     },
-    "jooble": {
-        "name": "jooble.org",
-        "base_url": "https://pl.jooble.org",
-        "delay": 2.5,
-    },
+    # "jooble" disabled — aggregator that duplicates offers from other sources
+    # "jooble": {
+    #     "name": "jooble.org",
+    #     "base_url": "https://pl.jooble.org",
+    #     "delay": 2.5,
+    # },
 }
