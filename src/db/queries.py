@@ -4,7 +4,7 @@ import json
 from datetime import date, datetime
 
 from src.db.database import get_connection
-from src.models.schema import JobOffer, ScrapeLogEntry
+from src.models.schema import JobOffer, ScrapeLogEntry, Source
 
 
 def upsert_offers(offers: list[JobOffer]) -> tuple[int, int]:
@@ -186,3 +186,53 @@ def get_stats_summary() -> dict:
         "sources": row[3],
         "cities": row[4],
     }
+
+
+def update_dedup_clusters(clusters: list[tuple[str, str]]) -> int:
+    """Batch-update dedup_cluster_id for given (offer_id, cluster_id) pairs.
+
+    Returns count of rows updated.
+    """
+    if not clusters:
+        return 0
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.executemany(
+        "UPDATE job_offers SET dedup_cluster_id = %s WHERE id = %s",
+        [(cluster_id, offer_id) for offer_id, cluster_id in clusters],
+    )
+    affected = cursor.rowcount
+    conn.commit()
+    cursor.close()
+    return affected
+
+
+def get_active_offers_for_dedup(sources: list[Source] | None = None) -> list[dict]:
+    """Fetch minimal offer data for cross-source deduplication.
+
+    Returns dicts with: id, source, title, company_name, location_city, dedup_cluster_id.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    sql = """SELECT id, source, title, company_name, location_city, dedup_cluster_id
+             FROM job_offers WHERE is_active = true"""
+    params: list = []
+    if sources:
+        placeholders = ", ".join(["%s"] * len(sources))
+        sql += f" AND source IN ({placeholders})"
+        params = [s.value for s in sources]
+    cursor.execute(sql, params)
+    rows = cursor.fetchall()
+    cursor.close()
+    return [
+        {
+            "id": r[0],
+            "source": r[1],
+            "title": r[2],
+            "company_name": r[3],
+            "location_city": r[4],
+            "dedup_cluster_id": r[5],
+        }
+        for r in rows
+    ]

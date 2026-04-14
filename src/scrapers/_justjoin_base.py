@@ -178,7 +178,7 @@ def _pick_best_salary(
     salary_type = "netto" if best.get("gross") is False else "brutto" if best.get("gross") is True else None
 
     all_types = [EMPLOYMENT_TYPE_MAP.get(e.get("type", ""), e.get("type", "")) for e in employment_types]
-    employment_str = ", ".join(dict.fromkeys(all_types))
+    employment_str = " / ".join(dict.fromkeys(all_types))
 
     if salary_min is not None:
         salary_min = float(salary_min)

@@ -6,9 +6,16 @@ from datetime import datetime
 from rich.console import Console
 
 from src.db.migrations import init_db
-from src.db.queries import create_daily_snapshot, insert_scrape_log, mark_inactive, upsert_offers
-from src.models.schema import ScrapedResult, ScrapeLogEntry, ScrapeStatus, Source
-from src.pipeline.deduplicator import deduplicate_offers
+from src.db.queries import (
+    create_daily_snapshot,
+    get_active_offers_for_dedup,
+    insert_scrape_log,
+    mark_inactive,
+    update_dedup_clusters,
+    upsert_offers,
+)
+from src.models.schema import JobOffer, ScrapedResult, ScrapeLogEntry, ScrapeStatus, Source
+from src.pipeline.deduplicator import are_duplicates, compute_dedup_key, deduplicate_offers
 from src.pipeline.normalizer import normalize_offers
 from src.scrapers.base import BaseScraper
 from src.scrapers.justjoinit import JustJoinITScraper
@@ -73,10 +80,6 @@ def run_pipeline(
                 console.print("  Normalizing...")
                 normalized = normalize_offers(result.offers)
 
-                # Deduplicate (cross-source)
-                console.print("  Deduplicating...")
-                normalized = deduplicate_offers(normalized)
-
                 # Store
                 console.print("  Storing to MySQL...")
                 new_count, updated_count = upsert_offers(normalized)
@@ -107,6 +110,16 @@ def run_pipeline(
 
     console.rule("[bold blue]Pipeline Complete")
 
+    # Global cross-source deduplication
+    if len([s for s in results if results[s].status != ScrapeStatus.FAILED]) > 1:
+        try:
+            console.print("  [bold]Running cross-source deduplication...[/]")
+            dedup_count = _run_global_dedup(sources)
+            if dedup_count:
+                console.print(f"  [green]{dedup_count} offers assigned to dedup clusters[/]")
+        except Exception as e:
+            console.print(f"  [yellow]Deduplication failed: {e}[/]")
+
     # Daily snapshot of active offers
     try:
         snapshot_count = create_daily_snapshot()
@@ -123,3 +136,44 @@ def run_pipeline(
         )
 
     return results
+
+
+def _run_global_dedup(sources: list[Source]) -> int:
+    """Run cross-source deduplication on active offers in the database.
+
+    Fetches minimal offer data, runs dedup in-memory, then batch-updates
+    dedup_cluster_id in the database. Returns count of offers tagged.
+    """
+    from collections import defaultdict
+
+    rows = get_active_offers_for_dedup(sources)
+    if len(rows) < 2:
+        return 0
+
+    # Build lightweight proxy objects for deduplication
+    proxies: list[JobOffer] = []
+    for r in rows:
+        proxy = JobOffer(
+            source=Source(r["source"]),
+            source_id=r["id"],  # use offer id as source_id (only for dedup)
+            source_url="",
+            title=r["title"] or "",
+            company_name=r["company_name"],
+            location_city=r["location_city"],
+            dedup_cluster_id=r["dedup_cluster_id"],
+        )
+        proxy._db_id = r["id"]  # type: ignore[attr-defined]
+        proxies.append(proxy)
+
+    deduplicate_offers(proxies)
+
+    # Collect only newly assigned clusters
+    updates: list[tuple[str, str]] = []
+    for i, proxy in enumerate(proxies):
+        if proxy.dedup_cluster_id and proxy.dedup_cluster_id != rows[i].get("dedup_cluster_id"):
+            updates.append((proxy._db_id, proxy.dedup_cluster_id))  # type: ignore[attr-defined]
+
+    if updates:
+        update_dedup_clusters(updates)
+
+    return len(updates)

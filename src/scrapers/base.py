@@ -91,13 +91,23 @@ class BaseScraper(ABC):
                 try:
                     offers = self.scrape_listings(page)
                 except Exception as e:
-                    console.print(f"[red]ERROR: {e}[/]")
-                    result.errors += 1
-                    if page == 1:
-                        result.status = ScrapeStatus.FAILED
+                    # Retry page 1 once before giving up entirely
+                    if page == 1 and not result.errors:
+                        console.print(f"[yellow]RETRY page 1: {e}[/]")
+                        result.errors += 1
+                        self._wait()
+                        try:
+                            offers = self.scrape_listings(page)
+                        except Exception as e2:
+                            console.print(f"[red]FAILED after retry: {e2}[/]")
+                            result.errors += 1
+                            result.status = ScrapeStatus.FAILED
+                            break
+                    else:
+                        console.print(f"[red]ERROR: {e}[/]")
+                        result.errors += 1
+                        result.status = ScrapeStatus.PARTIAL if page > 1 else ScrapeStatus.FAILED
                         break
-                    result.status = ScrapeStatus.PARTIAL
-                    break
 
                 if not offers:
                     console.print("[dim]no more results[/]")

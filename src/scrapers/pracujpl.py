@@ -3,10 +3,16 @@ from __future__ import annotations
 import json
 import re
 
-from playwright.sync_api import sync_playwright, Browser
+from playwright.sync_api import Error as PlaywrightError, sync_playwright, Browser
 from rich.console import Console
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from config.settings import SOURCES
+from config.settings import (
+    PLAYWRIGHT_GOTO_TIMEOUT,
+    PLAYWRIGHT_MAX_RETRIES,
+    PLAYWRIGHT_SELECTOR_TIMEOUT,
+    SOURCES,
+)
 from src.models.schema import JobOffer, SalaryPeriod, Seniority, Source, WorkMode
 from src.scrapers.base import BaseScraper
 
@@ -32,7 +38,6 @@ class PracujPLScraper(BaseScraper):
         super().__init__(max_pages=max_pages)
         self._playwright = None
         self._browser: Browser | None = None
-        self._context = None
 
     # -- lifecycle --------------------------------------------------------
 
@@ -46,9 +51,6 @@ class PracujPLScraper(BaseScraper):
 
     def close(self) -> None:
         super().close()
-        if self._context:
-            self._context.close()
-            self._context = None
         if self._browser:
             self._browser.close()
             self._browser = None
@@ -63,12 +65,10 @@ class PracujPLScraper(BaseScraper):
             return self.LISTING_URL
         return f"{self.LISTING_URL}?pn={page_num}"
 
-    def _ensure_context(self):
-        """Return a reusable browser context, creating it if needed."""
-        if self._context is not None:
-            return self._context
+    def _new_context(self):
+        """Create a fresh browser context (isolated cookies/session per page)."""
         browser = self._ensure_browser()
-        self._context = browser.new_context(
+        return browser.new_context(
             user_agent=(
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -76,27 +76,33 @@ class PracujPLScraper(BaseScraper):
             ),
             locale="pl-PL",
         )
-        return self._context
 
+    @retry(
+        stop=stop_after_attempt(PLAYWRIGHT_MAX_RETRIES),
+        wait=wait_exponential(multiplier=1, min=5, max=30),
+        retry=retry_if_exception_type((PlaywrightError, TimeoutError, json.JSONDecodeError)),
+    )
     def _fetch_next_data(self, url: str) -> dict | None:
-        """Load a page in a reusable browser context and extract __NEXT_DATA__."""
-        context = self._ensure_context()
+        """Load a page in a fresh browser context and extract __NEXT_DATA__."""
+        context = self._new_context()
         page = context.new_page()
         try:
-            page.goto(url, wait_until="domcontentloaded", timeout=60_000)
-            # Wait for __NEXT_DATA__ script tag (hidden by nature, use 'attached')
-            page.wait_for_selector("#__NEXT_DATA__", state="attached", timeout=15_000)
+            page.goto(url, wait_until="domcontentloaded", timeout=PLAYWRIGHT_GOTO_TIMEOUT)
+            page.wait_for_selector(
+                "#__NEXT_DATA__", state="attached", timeout=PLAYWRIGHT_SELECTOR_TIMEOUT
+            )
             raw = page.evaluate(
                 "() => {"
                 "  const el = document.getElementById('__NEXT_DATA__');"
                 "  return el ? el.textContent : null;"
                 "}"
             )
-            if raw:
-                return json.loads(raw)
-            return None
+            if not raw:
+                raise PlaywrightError("__NEXT_DATA__ element empty or missing")
+            return json.loads(raw)
         finally:
             page.close()
+            context.close()
 
     # -- parsing ----------------------------------------------------------
 

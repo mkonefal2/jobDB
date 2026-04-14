@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+from collections import defaultdict
 
 from rapidfuzz import fuzz
 
@@ -43,22 +44,37 @@ def are_duplicates(a: JobOffer, b: JobOffer) -> bool:
 
 
 def deduplicate_offers(offers: list[JobOffer]) -> list[JobOffer]:
-    """Assign dedup_cluster_id to offers that appear to be the same job across sources."""
+    """Assign dedup_cluster_id to offers that appear to be the same job across sources.
+
+    Uses pre-filtering by company+city hash to avoid O(n²) full comparisons.
+    Only compares offers from different sources within the same bucket.
+    """
+    # Group offers by dedup key (company+city hash) for fast pre-filtering
+    buckets: dict[str, list[int]] = defaultdict(list)
+    for idx, offer in enumerate(offers):
+        key = compute_dedup_key(offer)
+        buckets[key].append(idx)
+
     cluster_id = 0
 
-    for i, offer_a in enumerate(offers):
-        if offer_a.dedup_cluster_id:
+    for indices in buckets.values():
+        if len(indices) < 2:
             continue
 
-        for j in range(i + 1, len(offers)):
-            offer_b = offers[j]
-            if offer_b.dedup_cluster_id:
+        for i_pos, i in enumerate(indices):
+            offer_a = offers[i]
+            if offer_a.dedup_cluster_id:
                 continue
 
-            if are_duplicates(offer_a, offer_b):
-                if not offer_a.dedup_cluster_id:
-                    offer_a.dedup_cluster_id = f"cluster_{cluster_id}"
-                    cluster_id += 1
-                offer_b.dedup_cluster_id = offer_a.dedup_cluster_id
+            for j in indices[i_pos + 1 :]:
+                offer_b = offers[j]
+                if offer_b.dedup_cluster_id:
+                    continue
+
+                if are_duplicates(offer_a, offer_b):
+                    if not offer_a.dedup_cluster_id:
+                        offer_a.dedup_cluster_id = f"cluster_{cluster_id}"
+                        cluster_id += 1
+                    offer_b.dedup_cluster_id = offer_a.dedup_cluster_id
 
     return offers

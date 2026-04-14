@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from src.models.schema import JobOffer, WorkMode
+from src.models.schema import JobOffer, SalaryPeriod, WorkMode
 from src.pipeline.polish_cities import build_city_aliases, build_city_to_region
 
 # Auto-generated from comprehensive Polish cities database (~1000 cities + localities)
@@ -92,6 +92,26 @@ def normalize_offer(offer: JobOffer) -> JobOffer:
     # Default salary type to brutto (most common in Polish listings)
     if offer.salary_min and not offer.salary_type:
         offer.salary_type = "brutto"
+
+    # Validate salary range: swap if min > max
+    if offer.salary_min and offer.salary_max and offer.salary_min > offer.salary_max:
+        offer.salary_min, offer.salary_max = offer.salary_max, offer.salary_min
+
+    # Reject outlier salaries (likely parsing errors)
+    if offer.salary_max:
+        period = offer.salary_period or SalaryPeriod.MONTH
+        upper_bounds = {
+            SalaryPeriod.HOUR: 2_000,
+            SalaryPeriod.DAY: 15_000,
+            SalaryPeriod.MONTH: 200_000,
+            SalaryPeriod.YEAR: 2_500_000,
+        }
+        if offer.salary_max > upper_bounds.get(period, 200_000):
+            offer.salary_min = None
+            offer.salary_max = None
+            offer.salary_currency = None
+            offer.salary_period = None
+            offer.salary_type = None
 
     return offer
 

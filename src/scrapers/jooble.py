@@ -2,14 +2,19 @@ from __future__ import annotations
 
 import json
 import re
-import time
 from datetime import datetime
 from html import unescape
 
-from playwright.sync_api import Browser, sync_playwright
+from playwright.sync_api import Browser, Error as PlaywrightError, sync_playwright
 from rich.console import Console
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from config.settings import SOURCES
+from config.settings import (
+    PLAYWRIGHT_GOTO_TIMEOUT,
+    PLAYWRIGHT_MAX_RETRIES,
+    PLAYWRIGHT_SELECTOR_TIMEOUT,
+    SOURCES,
+)
 from src.models.schema import JobOffer, SalaryPeriod, Seniority, Source, WorkMode
 from src.scrapers.base import BaseScraper
 
@@ -65,6 +70,11 @@ class JoobleScraper(BaseScraper):
             return self.LISTING_URL
         return f"{self.LISTING_URL}?p={page_num}"
 
+    @retry(
+        stop=stop_after_attempt(PLAYWRIGHT_MAX_RETRIES),
+        wait=wait_exponential(multiplier=1, min=5, max=30),
+        retry=retry_if_exception_type((PlaywrightError, TimeoutError, json.JSONDecodeError)),
+    )
     def _fetch_initial_state(self, url: str) -> dict | None:
         """Load a page in a browser context and extract __INITIAL_STATE__."""
         browser = self._ensure_browser()
@@ -81,22 +91,23 @@ class JoobleScraper(BaseScraper):
             "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
         )
         try:
-            page.goto(url, wait_until="domcontentloaded", timeout=60_000)
+            page.goto(url, wait_until="domcontentloaded", timeout=PLAYWRIGHT_GOTO_TIMEOUT)
 
             # Wait for Cloudflare challenge to resolve and page to render
-            # Try waiting for a job card to appear
-            try:
-                page.wait_for_selector(
-                    '[data-test-name="_jobCard"]', state="attached", timeout=30_000
-                )
-            except Exception:
-                # Fallback: wait fixed time for Cloudflare to resolve
-                time.sleep(15)
+            page.wait_for_selector(
+                '[data-test-name="_jobCard"]', state="attached",
+                timeout=PLAYWRIGHT_SELECTOR_TIMEOUT + 15_000,  # extra buffer for Cloudflare
+            )
 
             raw = page.evaluate("() => JSON.stringify(window.__INITIAL_STATE__)")
-            if raw:
-                return json.loads(raw)
-            return None
+            if not raw:
+                raise PlaywrightError("__INITIAL_STATE__ empty or missing")
+            state = json.loads(raw)
+            # Validate that the expected structure exists
+            jobs = state.get("serpJobs", {}).get("jobs", [])
+            if not jobs or not jobs[0].get("items"):
+                raise PlaywrightError("No job items in __INITIAL_STATE__")
+            return state
         finally:
             page.close()
             context.close()
@@ -190,6 +201,9 @@ class JoobleScraper(BaseScraper):
         # Employment type from tags
         employment_type = _detect_employment_type(item.get("tags") or [])
 
+        # Seniority from title
+        seniority = _detect_seniority(title)
+
         # Published date
         published_at = None
         date_str = item.get("dateUpdated")
@@ -215,6 +229,7 @@ class JoobleScraper(BaseScraper):
             company_logo_url=company_logo_url,
             location_raw=location_raw,
             work_mode=work_mode,
+            seniority=seniority,
             employment_type=employment_type,
             salary_min=salary_min,
             salary_max=salary_max,
@@ -310,17 +325,60 @@ def _parse_salary(
     elif any(p in text_lower for p in ["rok", "year", "annual"]):
         period = SalaryPeriod.YEAR
 
-    # Extract numbers
-    numbers = re.findall(r"[\d\s]+", text)
+    # Extract numbers — handle space-separated thousands like "8 000"
+    # Match sequences of digits optionally separated by spaces, with optional decimals
+    numbers = re.findall(r"\d[\d\s]*\d(?:[.,]\d+)?|\d+(?:[.,]\d+)?", text)
     parsed = []
     for n in numbers:
-        n = n.strip().replace(" ", "")
-        if n and n.isdigit():
-            parsed.append(float(n))
+        n = n.strip().replace(" ", "").replace(",", ".")
+        if not n:
+            continue
+        try:
+            val = float(n)
+            # Filter out unlikely salary values (e.g. years, page numbers)
+            min_threshold = 5 if period == SalaryPeriod.HOUR else 20 if period == SalaryPeriod.DAY else 100
+            if val >= min_threshold:
+                parsed.append(val)
+        except ValueError:
+            continue
 
     if len(parsed) >= 2:
-        return parsed[0], parsed[1], currency, period
+        return min(parsed[:2]), max(parsed[:2]), currency, period
     elif len(parsed) == 1:
         return parsed[0], parsed[0], currency, period
 
     return None, None, None, None
+
+
+def _detect_seniority(title: str) -> Seniority:
+    """Detect seniority level from job title."""
+    if not title:
+        return Seniority.UNKNOWN
+
+    text = title.lower()
+
+    # Check from most specific (longest) to least specific
+    checks = [
+        ("młodszy specjalista", Seniority.JUNIOR),
+        ("młodsza specjalistka", Seniority.JUNIOR),
+        ("starszy specjalista", Seniority.SENIOR),
+        ("starsza specjalistka", Seniority.SENIOR),
+        ("intern", Seniority.INTERN),
+        ("praktykant", Seniority.INTERN),
+        ("stażyst", Seniority.INTERN),
+        ("junior", Seniority.JUNIOR),
+        ("specjalist", Seniority.MID),
+        ("mid", Seniority.MID),
+        ("regular", Seniority.MID),
+        ("senior", Seniority.SENIOR),
+        ("lead", Seniority.LEAD),
+        ("manager", Seniority.MANAGER),
+        ("kierownik", Seniority.MANAGER),
+        ("dyrektor", Seniority.LEAD),
+    ]
+
+    for keyword, seniority in checks:
+        if keyword in text:
+            return seniority
+
+    return Seniority.UNKNOWN

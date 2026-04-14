@@ -55,3 +55,8 @@ SOURCES = {
     #     "delay": 2.5,
     # },
 }
+
+# Playwright settings (for browser-based scrapers)
+PLAYWRIGHT_GOTO_TIMEOUT = 60_000  # ms — page.goto() timeout
+PLAYWRIGHT_SELECTOR_TIMEOUT = 15_000  # ms — wait_for_selector() timeout
+PLAYWRIGHT_MAX_RETRIES = 3  # retry attempts for page fetch
