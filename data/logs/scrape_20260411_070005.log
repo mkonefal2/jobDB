@@ -1,0 +1,8 @@
+2026-04-11 07:00:05  INFO      Scheduled scrape started
+2026-04-11 07:00:05  INFO      Sources: all | max_pages: None | details: False
+2026-04-11 08:55:47  INFO      pracapl: 16777 scraped, 16526 new, 251 updated, 0 errors, status=success
+2026-04-11 08:55:47  INFO      pracuj: 51225 scraped, 50860 new, 365 updated, 0 errors, status=success
+2026-04-11 08:55:47  INFO      justjoinit: 20834 scraped, 20329 new, 505 updated, 0 errors, status=success
+2026-04-11 08:55:47  INFO      rocketjobs: 22595 scraped, 22122 new, 473 updated, 0 errors, status=success
+2026-04-11 08:55:47  INFO      jooble: 180 scraped, 22 new, 158 updated, 0 errors, status=success
+2026-04-11 08:55:47  INFO      Scrape completed successfully

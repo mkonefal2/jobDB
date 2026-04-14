@@ -8,80 +8,83 @@ from src.models.schema import JobOffer, ScrapeLogEntry
 
 
 def upsert_offers(offers: list[JobOffer]) -> tuple[int, int]:
-    """Insert new offers or update existing ones. Returns (new_count, updated_count)."""
+    """Insert new or update existing offers using INSERT ... ON DUPLICATE KEY UPDATE.
+
+    Returns (new_count, updated_count).
+    """
+    if not offers:
+        return 0, 0
+
     conn = get_connection()
     cursor = conn.cursor()
-    new_count = 0
-    updated_count = 0
     now = datetime.utcnow()
 
-    for offer in offers:
-        cursor.execute("SELECT id FROM job_offers WHERE id = %s", (offer.id,))
-        existing = cursor.fetchone()
+    rows = [
+        (
+            offer.id,
+            offer.source.value,
+            offer.source_id,
+            offer.source_url,
+            offer.title,
+            offer.company_name,
+            offer.company_logo_url,
+            offer.location_raw,
+            offer.location_city,
+            offer.location_region,
+            offer.work_mode.value,
+            offer.seniority.value,
+            offer.employment_type,
+            offer.salary_min,
+            offer.salary_max,
+            offer.salary_currency,
+            offer.salary_period.value if offer.salary_period else None,
+            offer.salary_type,
+            offer.category,
+            json.dumps(offer.technologies) if offer.technologies else None,
+            offer.description_text,
+            offer.dedup_cluster_id,
+            offer.published_at,
+            now,  # first_seen_at
+            now,  # last_seen_at
+            offer.scraped_at,
+        )
+        for offer in offers
+    ]
 
-        if existing is None:
-            cursor.execute(
-                """INSERT INTO job_offers (
-                    id, source, source_id, source_url, title, company_name,
-                    location_raw, location_city, location_region, work_mode,
-                    seniority, employment_type,
-                    salary_min, salary_max, salary_currency, salary_period, salary_type,
-                    category, technologies, description_text,
-                    published_at, first_seen_at, last_seen_at, is_active, scraped_at
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, true, %s)""",
-                (
-                    offer.id,
-                    offer.source.value,
-                    offer.source_id,
-                    offer.source_url,
-                    offer.title,
-                    offer.company_name,
-                    offer.location_raw,
-                    offer.location_city,
-                    offer.location_region,
-                    offer.work_mode.value,
-                    offer.seniority.value,
-                    offer.employment_type,
-                    offer.salary_min,
-                    offer.salary_max,
-                    offer.salary_currency,
-                    offer.salary_period.value if offer.salary_period else None,
-                    offer.salary_type,
-                    offer.category,
-                    json.dumps(offer.technologies) if offer.technologies else None,
-                    offer.description_text,
-                    offer.published_at,
-                    now,
-                    now,
-                    offer.scraped_at,
-                ),
-            )
-            new_count += 1
-        else:
-            cursor.execute(
-                """UPDATE job_offers SET
-                    title = %s, company_name = %s,
-                    salary_min = %s, salary_max = %s, salary_currency = %s, salary_period = %s,
-                    salary_type = %s,
-                    last_seen_at = %s, is_active = true, scraped_at = %s
-                WHERE id = %s""",
-                (
-                    offer.title,
-                    offer.company_name,
-                    offer.salary_min,
-                    offer.salary_max,
-                    offer.salary_currency,
-                    offer.salary_period.value if offer.salary_period else None,
-                    offer.salary_type,
-                    now,
-                    offer.scraped_at,
-                    offer.id,
-                ),
-            )
-            updated_count += 1
+    sql = """INSERT INTO job_offers (
+                id, source, source_id, source_url, title, company_name, company_logo_url,
+                location_raw, location_city, location_region, work_mode,
+                seniority, employment_type,
+                salary_min, salary_max, salary_currency, salary_period, salary_type,
+                category, technologies, description_text, dedup_cluster_id,
+                published_at, first_seen_at, last_seen_at, scraped_at
+             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+             ON DUPLICATE KEY UPDATE
+                title = VALUES(title),
+                company_name = VALUES(company_name),
+                company_logo_url = VALUES(company_logo_url),
+                salary_min = VALUES(salary_min),
+                salary_max = VALUES(salary_max),
+                salary_currency = VALUES(salary_currency),
+                salary_period = VALUES(salary_period),
+                salary_type = VALUES(salary_type),
+                dedup_cluster_id = VALUES(dedup_cluster_id),
+                last_seen_at = VALUES(last_seen_at),
+                is_active = true,
+                scraped_at = VALUES(scraped_at)"""
 
+    cursor.executemany(sql, rows)
+
+    # MySQL: affected_rows counts 1 for INSERT, 2 for UPDATE-with-change, 0 for no-op
+    # With executemany the rowcount is total affected rows
+    total_affected = cursor.rowcount
     conn.commit()
     cursor.close()
+
+    # Estimate: new rows = affected 1 each, updated = affected 2 each
+    # Exact split requires checking, but a reasonable heuristic:
+    new_count = max(0, 2 * len(offers) - total_affected)
+    updated_count = len(offers) - new_count
     return new_count, updated_count
 
 

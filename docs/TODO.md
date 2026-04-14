@@ -126,9 +126,9 @@ Aktualnie system używa `print()` i `rich.console`.
 
 ## ⚪ Priorytet 4 — Migracja do hurtowni danych (PostgreSQL + Power BI)
 
-### 4.1 Migracja DuckDB → PostgreSQL
+### 4.1 Migracja MySQL → PostgreSQL
 
-Docelowo system będzie działał na PostgreSQL jako hurtownia danych podłączona do Power BI.
+Obecnie system działa na MySQL. Docelowo migracja do PostgreSQL jako hurtownia danych podłączona do Power BI.
 
 **Fazy migracji:**
 
@@ -144,13 +144,13 @@ Docelowo system będzie działał na PostgreSQL jako hurtownia danych podłączo
 
 #### Faza B: Warstwa abstrakcji bazy danych
 - [ ] Abstrakcja `DatabaseBackend` (protocol/ABC) w `src/db/database.py`
-- [ ] Implementacja `DuckDBBackend` (obecna logika)
+- [ ] Implementacja `MySQLBackend` (obecna logika)
 - [ ] Implementacja `PostgreSQLBackend` (asyncpg lub psycopg3)
-- [ ] Konfiguracja backendu w `config/settings.py` (przełącznik DuckDB ↔ PostgreSQL)
+- [ ] Konfiguracja backendu w `config/settings.py` (przełącznik MySQL ↔ PostgreSQL)
 - [ ] Adapter queries — zunifikowane API niezależne od silnika
 
 #### Faza C: Migracja danych
-- [ ] Skrypt ETL: DuckDB → PostgreSQL (`scripts/migrate_to_postgres.py`)
+- [ ] Skrypt ETL: MySQL → PostgreSQL (`scripts/migrate_to_postgres.py`)
 - [ ] Walidacja danych po migracji (row counts, checksums)
 - [ ] Testy regresyjne pipeline na PostgreSQL
 
@@ -208,7 +208,7 @@ Zainstalowany (`playwright>=1.40`), ale nieużywany. Potrzebny do portali SPA (j
 - [ ] Testy normalizera (city mapping, work mode detection)
 - [ ] Testy deduplicatora (fuzzy matching, klasteryzacja)
 - [ ] Testy pipeline (integration test z mock scraperami)
-- [ ] Testy queries (upsert, mark_inactive, snapshots z in-memory DuckDB)
+- [ ] Testy queries (upsert, mark_inactive, snapshots z testową bazą MySQL)
 - [ ] Testy dashboardu (Streamlit testing framework)
 
 ### 5.5 CI/CD
@@ -249,8 +249,8 @@ Zainstalowany (`playwright>=1.40`), ale nieużywany. Potrzebny do portali SPA (j
 | Testy integracyjne | ❌ Brak |
 | CI/CD | ❌ Brak |
 | Schemat PostgreSQL (star schema) | ❌ Brak |
-| Abstrakcja bazy danych | ❌ Brak (hardcoded DuckDB) |
-| Migracja DuckDB → PostgreSQL | ❌ Brak |
+| Abstrakcja bazy danych | ❌ Brak (hardcoded MySQL) |
+| Migracja MySQL → PostgreSQL | ❌ Brak |
 | Power BI (raporty + połączenie) | ❌ Brak |
 | Dashboard: zakładka Postęp prac | ✅ Gotowa |
 | Agent: progress-tracker | ✅ Gotowy |

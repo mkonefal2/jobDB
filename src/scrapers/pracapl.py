@@ -111,12 +111,18 @@ class PracaPLScraper(BaseScraper):
             self._extract_card_fields(card)
         )
 
+        # Company logo
+        logo_el = card.css_first("img.listing__logo")
+        company_logo_url = logo_el.attributes.get("src", "").strip() if logo_el else None
+        company_logo_url = company_logo_url or None
+
         return [JobOffer(
             source=self.source,
             source_id=source_id,
             source_url=url,
             title=title,
             company_name=company,
+            company_logo_url=company_logo_url,
             location_raw=location_raw if location_raw else None,
             work_mode=work_mode,
             seniority=seniority,
@@ -136,6 +142,11 @@ class PracaPLScraper(BaseScraper):
         company, work_mode, _, seniority, employment_type, salary_min, salary_max, currency, period = (
             self._extract_card_fields(card)
         )
+
+        # Company logo
+        logo_el = card.css_first("img.listing__logo")
+        company_logo_url = logo_el.attributes.get("src", "").strip() if logo_el else None
+        company_logo_url = company_logo_url or None
 
         offers = []
         for loc_item in card.css("ul.listing__locations li.listing__location-item"):
@@ -162,6 +173,7 @@ class PracaPLScraper(BaseScraper):
                 source_url=url,
                 title=title,
                 company_name=company,
+                company_logo_url=company_logo_url,
                 location_raw=location_raw if location_raw else None,
                 work_mode=work_mode,
                 seniority=seniority,
@@ -239,7 +251,7 @@ class PracaPLScraper(BaseScraper):
         if main_details_el:
             details_text = main_details_el.text(strip=True)
             salary_match = re.search(
-                r"([\d\s]+(?:\s*-\s*[\d\s]+)?)\s*(?:zł|PLN|EUR|€|\$|USD|GBP|£|CHF)"
+                r"([\d\s,]+(?:\s*-\s*[\d\s,]+)?)\s*(?:zł|PLN|EUR|€|\$|USD|GBP|£|CHF)"
                 r"\s*(?:brutto|netto|na rękę)?/?(?:mies|godz|h|dzień|day|rok|year)?\.?",
                 details_text,
                 re.IGNORECASE,
@@ -327,9 +339,9 @@ def _parse_salary(text: str) -> tuple[float | None, float | None, str | None, Sa
     # First, normalize separators: replace commas used as decimal separators
     normalized = text.replace(",", ".")
 
-    # Find all number-like sequences (digits possibly separated by spaces)
+    # Find all number-like sequences (digits possibly separated by spaces, with optional decimal part)
     # Use word boundary to avoid matching digits inside words like "B2B"
-    numbers = re.findall(r"(?<![A-Za-z])(\d[\d\s]*\d|\d+)(?![A-Za-z])", normalized)
+    numbers = re.findall(r"(?<![A-Za-z])(\d[\d\s]*\d(?:\.\d+)?|\d+(?:\.\d+)?)(?![A-Za-z])", normalized)
     cleaned: list[float] = []
     for n in numbers:
         n = n.replace(" ", "").strip()
@@ -355,7 +367,11 @@ def _parse_salary(text: str) -> tuple[float | None, float | None, str | None, Sa
 
 
 def _detect_seniority(text: str) -> Seniority:
-    """Detect seniority level, preferring the highest level found."""
+    """Detect seniority level from text.
+
+    For multi-level listings (e.g. "Junior/Mid/Senior"), returns the middle
+    level as a reasonable default — avoids bias toward the lowest or highest.
+    """
     text = text.lower()
     # Collect all detected levels with priority (higher = more senior)
     found: list[tuple[int, Seniority]] = []

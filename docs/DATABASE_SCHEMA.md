@@ -1,6 +1,6 @@
 # Schemat bazy danych — jobDB
 
-Baza danych: **DuckDB** (`data/jobdb.duckdb`)
+Baza danych: **MySQL** (`localhost:3306/jobdb`)
 
 ---
 
@@ -15,6 +15,7 @@ erDiagram
         VARCHAR source_url "NOT NULL"
         VARCHAR title "NOT NULL"
         VARCHAR company_name
+        VARCHAR company_logo_url
         VARCHAR location_raw
         VARCHAR location_city
         VARCHAR location_region
@@ -90,6 +91,7 @@ Przechowuje wszystkie zebrane oferty pracy ze wszystkich źródeł.
 | `source_url` | `VARCHAR` | `NOT NULL` | Pełny URL oferty w serwisie źródłowym |
 | `title` | `VARCHAR` | `NOT NULL` | Tytuł stanowiska |
 | `company_name` | `VARCHAR` | | Nazwa pracodawcy |
+| `company_logo_url` | `VARCHAR` | | URL logo firmy (ładowane z zewnętrznego serwera) |
 | `location_raw` | `VARCHAR` | | Surowa lokalizacja z ogłoszenia |
 | `location_city` | `VARCHAR` | | Znormalizowana nazwa miasta |
 | `location_region` | `VARCHAR` | | Województwo (uzupełniane przez normalizer) |
@@ -102,7 +104,7 @@ Przechowuje wszystkie zebrane oferty pracy ze wszystkich źródeł.
 | `salary_period` | `VARCHAR` | | Okres rozliczeniowy: `month` / `hour` / `day` / `year` |
 | `salary_type` | `VARCHAR` | | Typ wynagrodzenia: `brutto` / `netto` |
 | `category` | `VARCHAR` | | Kategoria branżowa oferty |
-| `technologies` | `VARCHAR[]` | | Lista technologii/wymagań (tablica DuckDB) |
+| `technologies` | `JSON` | | Lista technologii/wymagań (tablica JSON) |
 | `description_text` | `VARCHAR` | | Pełny tekst opisu ogłoszenia |
 | `published_at` | `TIMESTAMP` | | Data publikacji ogłoszenia |
 | `first_seen_at` | `TIMESTAMP` | `NOT NULL DEFAULT current_timestamp` | Kiedy oferta została po raz pierwszy zescrapowana |
@@ -129,7 +131,7 @@ Dzienne migawki aktywnych ofert do analizy trendów i zmian wynagrodzeń w czasi
 
 **Klucz główny:** `PRIMARY KEY (snapshot_date, offer_id)`
 
-**Relacja:** `offer_id` → `job_offers.id` (logiczny FK, DuckDB nie wymusza FK)
+**Relacja:** `offer_id` → `job_offers.id` (logiczny FK)
 
 ---
 

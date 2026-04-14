@@ -32,6 +32,7 @@ class PracujPLScraper(BaseScraper):
         super().__init__(max_pages=max_pages)
         self._playwright = None
         self._browser: Browser | None = None
+        self._context = None
 
     # -- lifecycle --------------------------------------------------------
 
@@ -45,6 +46,9 @@ class PracujPLScraper(BaseScraper):
 
     def close(self) -> None:
         super().close()
+        if self._context:
+            self._context.close()
+            self._context = None
         if self._browser:
             self._browser.close()
             self._browser = None
@@ -59,10 +63,12 @@ class PracujPLScraper(BaseScraper):
             return self.LISTING_URL
         return f"{self.LISTING_URL}?pn={page_num}"
 
-    def _fetch_next_data(self, url: str) -> dict | None:
-        """Load a page in a fresh browser context and extract __NEXT_DATA__."""
+    def _ensure_context(self):
+        """Return a reusable browser context, creating it if needed."""
+        if self._context is not None:
+            return self._context
         browser = self._ensure_browser()
-        context = browser.new_context(
+        self._context = browser.new_context(
             user_agent=(
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -70,6 +76,11 @@ class PracujPLScraper(BaseScraper):
             ),
             locale="pl-PL",
         )
+        return self._context
+
+    def _fetch_next_data(self, url: str) -> dict | None:
+        """Load a page in a reusable browser context and extract __NEXT_DATA__."""
+        context = self._ensure_context()
         page = context.new_page()
         try:
             page.goto(url, wait_until="domcontentloaded", timeout=60_000)
@@ -86,7 +97,6 @@ class PracujPLScraper(BaseScraper):
             return None
         finally:
             page.close()
-            context.close()
 
     # -- parsing ----------------------------------------------------------
 
@@ -128,6 +138,7 @@ class PracujPLScraper(BaseScraper):
         """
         title = group.get("jobTitle", "").strip()
         company = group.get("companyName", "").strip() or None
+        company_logo_url = group.get("companyLogoUri", "").strip() or None
         if not title:
             return []
 
@@ -165,6 +176,7 @@ class PracujPLScraper(BaseScraper):
                 source_url=source_url,
                 title=title,
                 company_name=company,
+                company_logo_url=company_logo_url,
                 location_raw=location_raw if location_raw else None,
                 work_mode=work_mode,
                 seniority=seniority,
@@ -228,12 +240,14 @@ def _parse_salary(
 
     # Split on range separator (en-dash or hyphen between numbers)
     # "11 500–15 000 zł" → ["11 500", "15 000 zł"]
+    # Normalize Polish decimal comma to dot
+    text = text.replace(",", ".")
     parts = re.split(r"[–\u2013]", text)
 
     cleaned: list[float] = []
     for part in parts:
-        # Extract number groups: "11 500" or "38" (digits with optional space separators)
-        nums = re.findall(r"\d[\d\s]*\d|\d+", part)
+        # Extract number groups: "11 500" or "38" or "35.50" (digits with optional space separators and decimals)
+        nums = re.findall(r"\d[\d\s]*\d(?:\.\d+)?|\d+(?:\.\d+)?", part)
         for n in nums:
             n = n.replace(" ", "").strip()
             if not n:
@@ -308,6 +322,7 @@ def _detect_employment(contracts: list[str]) -> str | None:
 
     mapping = {
         "umowa o pracę": "UoP",
+        "umowa o pracę tymczasow": "UoP tymczasowa",
         "kontrakt b2b": "B2B",
         "umowa zlecenie": "UZ",
         "umowa o dzieło": "UoD",

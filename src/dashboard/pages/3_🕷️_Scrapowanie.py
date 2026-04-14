@@ -31,15 +31,19 @@ if "scrape_log" not in st.session_state:
     st.session_state.scrape_log = []
 
 
-def _run_scrape(source: Source, max_pages: int | None) -> None:
-    """Run pipeline in a thread and store result in session state."""
+def _run_scrape(source: Source, max_pages: int | None, result_box: list) -> None:
+    """Run pipeline in a thread and store result in *result_box* (plain list).
+
+    We cannot touch st.session_state from a background thread because
+    Streamlit's ScriptRunContext is not available there.
+    """
     from src.pipeline.orchestrator import run_pipeline
 
     try:
         results = run_pipeline(sources=[source], max_pages=max_pages)
         entry = results.get(source)
         if entry:
-            st.session_state.scrape_log.append(
+            result_box.append(
                 {
                     "time": datetime.now().strftime("%H:%M:%S"),
                     "source": source.value,
@@ -50,7 +54,7 @@ def _run_scrape(source: Source, max_pages: int | None) -> None:
                 }
             )
         else:
-            st.session_state.scrape_log.append(
+            result_box.append(
                 {
                     "time": datetime.now().strftime("%H:%M:%S"),
                     "source": source.value,
@@ -61,7 +65,7 @@ def _run_scrape(source: Source, max_pages: int | None) -> None:
                 }
             )
     except Exception as e:
-        st.session_state.scrape_log.append(
+        result_box.append(
             {
                 "time": datetime.now().strftime("%H:%M:%S"),
                 "source": source.value,
@@ -71,8 +75,6 @@ def _run_scrape(source: Source, max_pages: int | None) -> None:
                 "errors": 1,
             }
         )
-    finally:
-        st.session_state.scrape_running = False
 
 
 # ── Settings ─────────────────────────────────────────────────────────────────
@@ -118,13 +120,16 @@ for idx, (key, cfg) in enumerate(SOURCES.items()):
                     use_container_width=True,
                 ):
                     st.session_state.scrape_running = True
+                    result_box: list[dict] = []
                     thread = threading.Thread(
                         target=_run_scrape,
-                        args=(source, max_pages),
+                        args=(source, max_pages, result_box),
                         daemon=True,
                     )
                     thread.start()
                     thread.join()  # wait for completion so we can rerun
+                    st.session_state.scrape_log.extend(result_box)
+                    st.session_state.scrape_running = False
                     st.rerun()
         else:
             st.button(

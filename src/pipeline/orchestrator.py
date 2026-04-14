@@ -6,8 +6,9 @@ from datetime import datetime
 from rich.console import Console
 
 from src.db.migrations import init_db
-from src.db.queries import insert_scrape_log, upsert_offers
+from src.db.queries import create_daily_snapshot, insert_scrape_log, mark_inactive, upsert_offers
 from src.models.schema import ScrapedResult, ScrapeLogEntry, ScrapeStatus, Source
+from src.pipeline.deduplicator import deduplicate_offers
 from src.pipeline.normalizer import normalize_offers
 from src.scrapers.base import BaseScraper
 from src.scrapers.justjoinit import JustJoinITScraper
@@ -72,9 +73,19 @@ def run_pipeline(
                 console.print("  Normalizing...")
                 normalized = normalize_offers(result.offers)
 
+                # Deduplicate (cross-source)
+                console.print("  Deduplicating...")
+                normalized = deduplicate_offers(normalized)
+
                 # Store
                 console.print("  Storing to MySQL...")
                 new_count, updated_count = upsert_offers(normalized)
+
+                # Mark offers not seen in this scrape as inactive
+                active_ids = {o.id for o in normalized}
+                inactive_count = mark_inactive(source.value, active_ids)
+                if inactive_count:
+                    console.print(f"  [dim]{inactive_count} offers marked inactive[/]")
 
                 log_entry.offers_scraped = len(normalized)
                 log_entry.offers_new = new_count
@@ -95,6 +106,13 @@ def run_pipeline(
             results[source] = log_entry
 
     console.rule("[bold blue]Pipeline Complete")
+
+    # Daily snapshot of active offers
+    try:
+        snapshot_count = create_daily_snapshot()
+        console.print(f"  Daily snapshot: {snapshot_count} active offers captured")
+    except Exception as e:
+        console.print(f"  [yellow]Snapshot failed: {e}[/]")
 
     # Print summary
     for source, log in results.items():

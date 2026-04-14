@@ -26,6 +26,9 @@ def normalize_city(raw_location: str | None) -> tuple[str | None, str | None]:
     parts = re.split(r"[,/;|+]", loc)
     candidate = parts[0].strip()
 
+    # Strip parenthetical suffixes: "Hipolitów (pow. miński)" → "Hipolitów"
+    candidate = re.sub(r"\s*\(.*\)\s*$", "", candidate).strip()
+
     # Strip common prefixes
     candidate = re.sub(r"^(ul\.|ul |al\.|al )", "", candidate).strip()
 

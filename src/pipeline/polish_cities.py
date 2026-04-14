@@ -1097,6 +1097,16 @@ LOCALITY_REGION: dict[str, str] = {
     "Kokotów": "małopolskie",
     "Katowice-Ligota": "śląskie",
     "Katowice-Brynów": "śląskie",
+    # Small villages appearing in praca.pl listings
+    "Adamów": "mazowieckie",
+    "Kajetany": "mazowieckie",
+    "Zakręt": "mazowieckie",
+    "Puchały": "mazowieckie",
+    "Hipolitów": "mazowieckie",
+    "Lubiczów": "mazowieckie",
+    "Sobienki": "mazowieckie",
+    "Sułkowice": "małopolskie",
+    "Markowa": "podkarpackie",
 }
 
 # Extra aliases: English names, common misspellings, etc.

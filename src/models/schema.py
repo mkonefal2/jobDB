@@ -51,6 +51,7 @@ class JobOffer(BaseModel):
     source_url: str
     title: str
     company_name: str | None = None
+    company_logo_url: str | None = None
 
     location_raw: str | None = None
     location_city: str | None = None
@@ -69,6 +70,8 @@ class JobOffer(BaseModel):
     category: str | None = None
     technologies: list[str] = Field(default_factory=list)
     description_text: str | None = None
+
+    dedup_cluster_id: str | None = None
 
     published_at: datetime | None = None
     scraped_at: datetime = Field(default_factory=datetime.utcnow)

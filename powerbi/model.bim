@@ -1,0 +1,2036 @@
+{
+  "name": "jobDB",
+  "compatibilityLevel": 1567,
+  "model": {
+    "culture": "pl-PL",
+    "dataAccessOptions": {
+      "legacyRedirects": true,
+      "returnErrorValuesAsNull": true
+    },
+    "defaultPowerBIDataSourceVersion": "powerBI_V3",
+    "sourceQueryCulture": "pl-PL",
+    "tables": [
+      {
+        "name": "job_offers",
+        "lineageTag": "t-job-offers",
+        "dataCategory": "Regular",
+        "columns": [
+          {
+            "name": "id",
+            "dataType": "string",
+            "sourceColumn": "id",
+            "lineageTag": "c-id",
+            "summarizeBy": "none",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ]
+          },
+          {
+            "name": "source",
+            "dataType": "string",
+            "sourceColumn": "source",
+            "lineageTag": "c-source",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "title",
+            "dataType": "string",
+            "sourceColumn": "title",
+            "lineageTag": "c-title",
+            "dataCategory": "Uncategorized",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "company_name",
+            "dataType": "string",
+            "sourceColumn": "company_name",
+            "lineageTag": "c-company-name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "location_city",
+            "dataType": "string",
+            "sourceColumn": "location_city",
+            "lineageTag": "c-location-city",
+            "dataCategory": "City",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "location_region",
+            "dataType": "string",
+            "sourceColumn": "location_region",
+            "lineageTag": "c-location-region",
+            "dataCategory": "StateOrProvince",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "work_mode",
+            "dataType": "string",
+            "sourceColumn": "work_mode",
+            "lineageTag": "c-work-mode",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "seniority",
+            "dataType": "string",
+            "sourceColumn": "seniority",
+            "lineageTag": "c-seniority",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "employment_type",
+            "dataType": "string",
+            "sourceColumn": "employment_type",
+            "lineageTag": "c-employment-type",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "employment_category",
+            "dataType": "string",
+            "sourceColumn": "employment_category",
+            "lineageTag": "c-employment-category",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "salary_min",
+            "dataType": "double",
+            "sourceColumn": "salary_min",
+            "formatString": "#,##0.00",
+            "lineageTag": "c-salary-min",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "salary_max",
+            "dataType": "double",
+            "sourceColumn": "salary_max",
+            "formatString": "#,##0.00",
+            "lineageTag": "c-salary-max",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "salary_currency",
+            "dataType": "string",
+            "sourceColumn": "salary_currency",
+            "lineageTag": "c-salary-currency",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "salary_period",
+            "dataType": "string",
+            "sourceColumn": "salary_period",
+            "lineageTag": "c-salary-period",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "salary_type",
+            "dataType": "string",
+            "sourceColumn": "salary_type",
+            "lineageTag": "c-salary-type",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "category",
+            "dataType": "string",
+            "sourceColumn": "category",
+            "lineageTag": "c-category",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "technologies",
+            "dataType": "string",
+            "sourceColumn": "technologies",
+            "lineageTag": "c-technologies",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "published_at",
+            "dataType": "dateTime",
+            "sourceColumn": "published_at",
+            "formatString": "yyyy-MM-dd HH:mm:ss",
+            "lineageTag": "c-published-at",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "first_seen_at",
+            "dataType": "dateTime",
+            "sourceColumn": "first_seen_at",
+            "formatString": "yyyy-MM-dd HH:mm:ss",
+            "lineageTag": "c-first-seen-at",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "last_seen_at",
+            "dataType": "dateTime",
+            "sourceColumn": "last_seen_at",
+            "formatString": "yyyy-MM-dd HH:mm:ss",
+            "lineageTag": "c-last-seen-at",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "is_active",
+            "dataType": "boolean",
+            "sourceColumn": "is_active",
+            "lineageTag": "c-is-active",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "scraped_at",
+            "dataType": "dateTime",
+            "sourceColumn": "scraped_at",
+            "formatString": "yyyy-MM-dd HH:mm:ss",
+            "lineageTag": "c-scraped-at",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "has_salary",
+            "dataType": "boolean",
+            "sourceColumn": "has_salary",
+            "lineageTag": "c-has-salary",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "scraped_date",
+            "dataType": "dateTime",
+            "sourceColumn": "scraped_date",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "c-scraped-date",
+            "dataCategory": "Date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "published_date",
+            "dataType": "dateTime",
+            "sourceColumn": "published_date",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "c-published-date",
+            "dataCategory": "Date",
+            "summarizeBy": "none"
+          },
+          {
+            "type": "calculated",
+            "name": "Salary Midpoint",
+            "dataType": "double",
+            "expression": "IF( job_offers[salary_min] > 0 && job_offers[salary_max] > 0, (job_offers[salary_min] + job_offers[salary_max]) / 2, BLANK() )",
+            "formatString": "#,##0",
+            "lineageTag": "cc-salary-midpoint",
+            "summarizeBy": "none"
+          },
+          {
+            "type": "calculated",
+            "name": "Salary Spread",
+            "dataType": "double",
+            "expression": "IF( job_offers[salary_min] > 0 && job_offers[salary_max] > 0, job_offers[salary_max] - job_offers[salary_min], BLANK() )",
+            "formatString": "#,##0",
+            "lineageTag": "cc-salary-spread",
+            "summarizeBy": "none"
+          },
+          {
+            "type": "calculated",
+            "name": "Salary Spread %",
+            "dataType": "double",
+            "expression": "IF( job_offers[salary_min] > 0, DIVIDE( job_offers[salary_max] - job_offers[salary_min], job_offers[salary_min], 0 ), BLANK() )",
+            "formatString": "0.0%",
+            "lineageTag": "cc-salary-spread-pct",
+            "summarizeBy": "none"
+          },
+          {
+            "type": "calculated",
+            "name": "Salary Monthly Normalized",
+            "dataType": "double",
+            "expression": [
+              "VAR _min = job_offers[salary_min]",
+              "VAR _max = job_offers[salary_max]",
+              "VAR _mid = DIVIDE(_min + _max, 2, BLANK())",
+              "VAR _period = job_offers[salary_period]",
+              "RETURN",
+              "    SWITCH(",
+              "        _period,",
+              "        \"month\", _mid,",
+              "        \"hour\",  _mid * 168,",
+              "        \"day\",   _mid * 21,",
+              "        \"year\",  DIVIDE(_mid, 12),",
+              "        BLANK()",
+              "    )"
+            ],
+            "formatString": "#,##0",
+            "lineageTag": "cc-salary-monthly-norm",
+            "summarizeBy": "none"
+          },
+          {
+            "type": "calculated",
+            "name": "Salary Band",
+            "dataType": "string",
+            "expression": [
+              "VAR _monthly = job_offers[Salary Monthly Normalized]",
+              "RETURN",
+              "    SWITCH(",
+              "        TRUE(),",
+              "        ISBLANK(_monthly),                    \"Brak danych\",",
+              "        _monthly < 5000,                       \"< 5 000 PLN\",",
+              "        _monthly >= 5000  && _monthly < 8000,  \"5 000 \\u2013 7 999\",",
+              "        _monthly >= 8000  && _monthly < 12000, \"8 000 \\u2013 11 999\",",
+              "        _monthly >= 12000 && _monthly < 16000, \"12 000 \\u2013 15 999\",",
+              "        _monthly >= 16000 && _monthly < 22000, \"16 000 \\u2013 21 999\",",
+              "        _monthly >= 22000 && _monthly < 30000, \"22 000 \\u2013 29 999\",",
+              "        _monthly >= 30000,                     \"30 000+ PLN\",",
+              "        \"Brak danych\"",
+              "    )"
+            ],
+            "sortByColumn": "Salary Band Order",
+            "lineageTag": "cc-salary-band",
+            "summarizeBy": "none"
+          },
+          {
+            "type": "calculated",
+            "name": "Salary Band Order",
+            "dataType": "int64",
+            "isHidden": true,
+            "expression": [
+              "VAR _monthly = job_offers[Salary Monthly Normalized]",
+              "RETURN",
+              "    SWITCH(",
+              "        TRUE(),",
+              "        ISBLANK(_monthly), 99,",
+              "        _monthly < 5000,   1,",
+              "        _monthly < 8000,   2,",
+              "        _monthly < 12000,  3,",
+              "        _monthly < 16000,  4,",
+              "        _monthly < 22000,  5,",
+              "        _monthly < 30000,  6,",
+              "        _monthly >= 30000, 7,",
+              "        99",
+              "    )"
+            ],
+            "lineageTag": "cc-salary-band-order",
+            "summarizeBy": "none"
+          },
+          {
+            "type": "calculated",
+            "name": "Offer Lifespan Days",
+            "dataType": "int64",
+            "expression": [
+              "VAR _start = job_offers[first_seen_at]",
+              "VAR _end = IF(job_offers[is_active], NOW(), job_offers[last_seen_at])",
+              "RETURN",
+              "    IF(",
+              "        NOT ISBLANK(_start),",
+              "        DATEDIFF(_start, _end, DAY),",
+              "        BLANK()",
+              "    )"
+            ],
+            "lineageTag": "cc-offer-lifespan",
+            "summarizeBy": "none"
+          },
+          {
+            "type": "calculated",
+            "name": "Offer Lifespan Category",
+            "dataType": "string",
+            "expression": [
+              "VAR _days = job_offers[Offer Lifespan Days]",
+              "RETURN",
+              "    SWITCH(",
+              "        TRUE(),",
+              "        ISBLANK(_days),    \"Nieznane\",",
+              "        _days <= 3,         \"1\\u20133 dni\",",
+              "        _days <= 7,         \"4\\u20137 dni\",",
+              "        _days <= 14,        \"1\\u20132 tygodnie\",",
+              "        _days <= 30,        \"2\\u20134 tygodnie\",",
+              "        _days <= 60,        \"1\\u20132 miesi\\u0105ce\",",
+              "        _days > 60,         \"60+ dni\"",
+              "    )"
+            ],
+            "lineageTag": "cc-offer-lifespan-cat",
+            "summarizeBy": "none"
+          },
+          {
+            "type": "calculated",
+            "name": "Data Completeness Score",
+            "dataType": "double",
+            "expression": [
+              "VAR _company   = IF(NOT ISBLANK(job_offers[company_name]), 1, 0)",
+              "VAR _city      = IF(NOT ISBLANK(job_offers[location_city]), 1, 0)",
+              "VAR _workMode  = IF(job_offers[work_mode] <> \"unknown\", 1, 0)",
+              "VAR _seniority = IF(job_offers[seniority] <> \"unknown\", 1, 0)",
+              "VAR _empType   = IF(NOT ISBLANK(job_offers[employment_type]), 1, 0)",
+              "VAR _salary    = IF(NOT ISBLANK(job_offers[salary_min]), 1, 0)",
+              "VAR _category  = IF(NOT ISBLANK(job_offers[category]), 1, 0)",
+              "RETURN",
+              "    DIVIDE(_company + _city + _workMode + _seniority + _empType + _salary + _category, 7, 0)"
+            ],
+            "formatString": "0.0%",
+            "lineageTag": "cc-data-quality",
+            "summarizeBy": "none"
+          },
+          {
+            "type": "calculated",
+            "name": "Data Quality Label",
+            "dataType": "string",
+            "expression": [
+              "VAR _score = job_offers[Data Completeness Score]",
+              "RETURN",
+              "    SWITCH(",
+              "        TRUE(),",
+              "        _score >= 0.85, \"Wysoka\",",
+              "        _score >= 0.57, \"\\u015arednia\",",
+              "        TRUE(),         \"Niska\"",
+              "    )"
+            ],
+            "lineageTag": "cc-data-quality-label",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "job_offers",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = MySQL.Database(#\"pDBServer\", #\"pDBName\"),",
+                "    job_offers = Source{[Schema=\"jobdb\", Item=\"job_offers\"]}[Data],",
+                "",
+                "    FilteredRows = Table.SelectRows(job_offers, each",
+                "        [scraped_at] >= Date.AddDays(DateTime.LocalNow(), -#\"pDaysBack\")",
+                "    ),",
+                "",
+                "    TypedColumns = Table.TransformColumnTypes(FilteredRows, {",
+                "        {\"id\", type text}, {\"source\", type text}, {\"title\", type text},",
+                "        {\"company_name\", type text}, {\"location_city\", type text},",
+                "        {\"location_region\", type text}, {\"work_mode\", type text},",
+                "        {\"seniority\", type text}, {\"employment_type\", type text},",
+                "        {\"salary_min\", type number}, {\"salary_max\", type number},",
+                "        {\"salary_currency\", type text}, {\"salary_period\", type text},",
+                "        {\"salary_type\", type text}, {\"category\", type text},",
+                "        {\"published_at\", type datetime}, {\"first_seen_at\", type datetime},",
+                "        {\"last_seen_at\", type datetime}, {\"is_active\", type logical},",
+                "        {\"scraped_at\", type datetime}",
+                "    }),",
+                "",
+                "    NormalizedEmployment = Table.AddColumn(TypedColumns, \"employment_category\", each",
+                "        if Text.Contains([employment_type] ?? \"\", \"B2B\") and Text.Contains([employment_type] ?? \"\", \"UoP\")",
+                "            then \"UoP + B2B\"",
+                "        else if [employment_type] = \"B2B\" then \"B2B\"",
+                "        else if [employment_type] = \"UoP\" then \"UoP\"",
+                "        else if Text.Contains([employment_type] ?? \"\", \"UZ\")",
+                "            or Text.Contains([employment_type] ?? \"\", \"zlecenie\")",
+                "            then \"Umowa zlecenie\"",
+                "        else if [employment_type] = \"staż\" then \"Staż\"",
+                "        else if [employment_type] = null then \"Nieokreślony\"",
+                "        else \"Inne\",",
+                "        type text",
+                "    ),",
+                "",
+                "    ParsedTech = Table.TransformColumns(NormalizedEmployment, {",
+                "        {\"technologies\", each",
+                "            try Text.Combine(",
+                "                List.Transform(Json.Document(_), each Text.From(_)),",
+                "                \", \"",
+                "            ) otherwise null,",
+                "            type text",
+                "        }",
+                "    }),",
+                "",
+                "    AddDateKey = Table.AddColumn(ParsedTech, \"scraped_date\", each",
+                "        DateTime.Date([scraped_at]), type date",
+                "    ),",
+                "",
+                "    AddPublishedDate = Table.AddColumn(AddDateKey, \"published_date\", each",
+                "        DateTime.Date([published_at]), type date",
+                "    ),",
+                "",
+                "    AddHasSalary = Table.AddColumn(AddPublishedDate, \"has_salary\", each",
+                "        [salary_min] <> null and [salary_min] > 0, type logical",
+                "    ),",
+                "",
+                "    RemovedColumns = Table.RemoveColumns(AddHasSalary, {",
+                "        \"description_text\", \"company_logo_url\", \"source_id\",",
+                "        \"source_url\", \"location_raw\", \"dedup_cluster_id\"",
+                "    })",
+                "in",
+                "    RemovedColumns"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Total Offers",
+            "expression": "COUNTROWS(job_offers)",
+            "formatString": "#,##0",
+            "displayFolder": "📊 KPI",
+            "lineageTag": "m-total-offers"
+          },
+          {
+            "name": "Active Offers",
+            "expression": "CALCULATE( COUNTROWS(job_offers), job_offers[is_active] = TRUE() )",
+            "formatString": "#,##0",
+            "displayFolder": "📊 KPI",
+            "lineageTag": "m-active-offers"
+          },
+          {
+            "name": "Inactive Offers",
+            "expression": "CALCULATE( COUNTROWS(job_offers), job_offers[is_active] = FALSE() )",
+            "formatString": "#,##0",
+            "displayFolder": "📊 KPI",
+            "lineageTag": "m-inactive-offers"
+          },
+          {
+            "name": "Offers With Salary",
+            "expression": "CALCULATE( COUNTROWS(job_offers), NOT ISBLANK(job_offers[salary_min]), job_offers[salary_min] > 0 )",
+            "formatString": "#,##0",
+            "displayFolder": "📊 KPI",
+            "lineageTag": "m-offers-with-salary"
+          },
+          {
+            "name": "Salary Transparency %",
+            "expression": "DIVIDE([Offers With Salary], [Total Offers], 0)",
+            "formatString": "0.0%",
+            "displayFolder": "📊 KPI",
+            "lineageTag": "m-salary-transparency"
+          },
+          {
+            "name": "Unique Companies",
+            "expression": "DISTINCTCOUNT(job_offers[company_name])",
+            "formatString": "#,##0",
+            "displayFolder": "📊 KPI",
+            "lineageTag": "m-unique-companies"
+          },
+          {
+            "name": "Unique Cities",
+            "expression": "DISTINCTCOUNT(job_offers[location_city])",
+            "formatString": "#,##0",
+            "displayFolder": "📊 KPI",
+            "lineageTag": "m-unique-cities"
+          },
+          {
+            "name": "Unique Sources",
+            "expression": "DISTINCTCOUNT(job_offers[source])",
+            "formatString": "#,##0",
+            "displayFolder": "📊 KPI",
+            "lineageTag": "m-unique-sources"
+          },
+          {
+            "name": "Avg Salary Min",
+            "expression": "CALCULATE( AVERAGE(job_offers[salary_min]), NOT ISBLANK(job_offers[salary_min]), job_offers[salary_min] > 0 )",
+            "formatString": "#,##0",
+            "displayFolder": "💰 Wynagrodzenia",
+            "lineageTag": "m-avg-salary-min"
+          },
+          {
+            "name": "Avg Salary Max",
+            "expression": "CALCULATE( AVERAGE(job_offers[salary_max]), NOT ISBLANK(job_offers[salary_max]), job_offers[salary_max] > 0 )",
+            "formatString": "#,##0",
+            "displayFolder": "💰 Wynagrodzenia",
+            "lineageTag": "m-avg-salary-max"
+          },
+          {
+            "name": "Avg Salary Midpoint",
+            "expression": "CALCULATE( AVERAGE(job_offers[Salary Midpoint]), NOT ISBLANK(job_offers[Salary Midpoint]) )",
+            "formatString": "#,##0",
+            "displayFolder": "💰 Wynagrodzenia",
+            "lineageTag": "m-avg-salary-midpoint"
+          },
+          {
+            "name": "Median Salary Midpoint",
+            "expression": "CALCULATE( MEDIAN(job_offers[Salary Midpoint]), NOT ISBLANK(job_offers[Salary Midpoint]) )",
+            "formatString": "#,##0",
+            "displayFolder": "💰 Wynagrodzenia",
+            "lineageTag": "m-median-salary"
+          },
+          {
+            "name": "Salary P10",
+            "expression": "CALCULATE( PERCENTILE.INC(job_offers[Salary Midpoint], 0.10), NOT ISBLANK(job_offers[Salary Midpoint]) )",
+            "formatString": "#,##0",
+            "displayFolder": "💰 Wynagrodzenia",
+            "lineageTag": "m-salary-p10"
+          },
+          {
+            "name": "Salary P25",
+            "expression": "CALCULATE( PERCENTILE.INC(job_offers[Salary Midpoint], 0.25), NOT ISBLANK(job_offers[Salary Midpoint]) )",
+            "formatString": "#,##0",
+            "displayFolder": "💰 Wynagrodzenia",
+            "lineageTag": "m-salary-p25"
+          },
+          {
+            "name": "Salary P75",
+            "expression": "CALCULATE( PERCENTILE.INC(job_offers[Salary Midpoint], 0.75), NOT ISBLANK(job_offers[Salary Midpoint]) )",
+            "formatString": "#,##0",
+            "displayFolder": "💰 Wynagrodzenia",
+            "lineageTag": "m-salary-p75"
+          },
+          {
+            "name": "Salary P90",
+            "expression": "CALCULATE( PERCENTILE.INC(job_offers[Salary Midpoint], 0.90), NOT ISBLANK(job_offers[Salary Midpoint]) )",
+            "formatString": "#,##0",
+            "displayFolder": "💰 Wynagrodzenia",
+            "lineageTag": "m-salary-p90"
+          },
+          {
+            "name": "Avg Salary Spread",
+            "expression": "CALCULATE( AVERAGE(job_offers[Salary Spread]), NOT ISBLANK(job_offers[Salary Spread]) )",
+            "formatString": "#,##0",
+            "displayFolder": "💰 Wynagrodzenia",
+            "lineageTag": "m-avg-salary-spread"
+          },
+          {
+            "name": "Avg Monthly Salary PLN",
+            "expression": "CALCULATE( AVERAGE(job_offers[Salary Monthly Normalized]), job_offers[salary_currency] = \"PLN\", NOT ISBLANK(job_offers[Salary Monthly Normalized]) )",
+            "formatString": "#,##0",
+            "displayFolder": "💰 Wynagrodzenia",
+            "lineageTag": "m-avg-monthly-pln"
+          },
+          {
+            "name": "Median Monthly Salary PLN",
+            "expression": "CALCULATE( MEDIAN(job_offers[Salary Monthly Normalized]), job_offers[salary_currency] = \"PLN\", NOT ISBLANK(job_offers[Salary Monthly Normalized]) )",
+            "formatString": "#,##0",
+            "displayFolder": "💰 Wynagrodzenia",
+            "lineageTag": "m-median-monthly-pln"
+          },
+          {
+            "name": "Salary Display",
+            "expression": [
+              "VAR _avg = [Avg Salary Midpoint]",
+              "RETURN",
+              "    IF(",
+              "        NOT ISBLANK(_avg),",
+              "        FORMAT(_avg, \"#,##0\") & \" PLN\",",
+              "        \"Brak danych\"",
+              "    )"
+            ],
+            "displayFolder": "💰 Wynagrodzenia",
+            "lineageTag": "m-salary-display"
+          },
+          {
+            "name": "Offers Previous Month",
+            "expression": "CALCULATE( [Total Offers], DATEADD(dim_Date[Date], -1, MONTH) )",
+            "formatString": "#,##0",
+            "displayFolder": "📈 Trendy",
+            "lineageTag": "m-offers-prev-month"
+          },
+          {
+            "name": "Offers MoM Change",
+            "expression": [
+              "VAR _current = [Total Offers]",
+              "VAR _previous = [Offers Previous Month]",
+              "RETURN",
+              "    IF(",
+              "        NOT ISBLANK(_previous) && _previous > 0,",
+              "        DIVIDE(_current - _previous, _previous, 0),",
+              "        BLANK()",
+              "    )"
+            ],
+            "formatString": "+0.0%;-0.0%;0.0%",
+            "displayFolder": "📈 Trendy",
+            "lineageTag": "m-offers-mom"
+          },
+          {
+            "name": "Offers MoM Trend Icon",
+            "expression": [
+              "VAR _change = [Offers MoM Change]",
+              "RETURN",
+              "    SWITCH(",
+              "        TRUE(),",
+              "        ISBLANK(_change), \"\\u27a1\\ufe0f\",",
+              "        _change > 0.05,   \"\\ud83d\\udcc8\",",
+              "        _change < -0.05,  \"\\ud83d\\udcc9\",",
+              "        \"\\u27a1\\ufe0f\"",
+              "    )"
+            ],
+            "displayFolder": "📈 Trendy",
+            "lineageTag": "m-offers-mom-icon"
+          },
+          {
+            "name": "Avg Salary Previous Month",
+            "expression": "CALCULATE( [Avg Salary Midpoint], DATEADD(dim_Date[Date], -1, MONTH) )",
+            "formatString": "#,##0",
+            "displayFolder": "📈 Trendy",
+            "lineageTag": "m-salary-prev-month"
+          },
+          {
+            "name": "Salary MoM Change",
+            "expression": [
+              "VAR _current = [Avg Salary Midpoint]",
+              "VAR _previous = [Avg Salary Previous Month]",
+              "RETURN",
+              "    IF(",
+              "        NOT ISBLANK(_previous) && _previous > 0,",
+              "        DIVIDE(_current - _previous, _previous, 0),",
+              "        BLANK()",
+              "    )"
+            ],
+            "formatString": "+0.0%;-0.0%;0.0%",
+            "displayFolder": "📈 Trendy",
+            "lineageTag": "m-salary-mom"
+          },
+          {
+            "name": "New Offers Today",
+            "expression": "CALCULATE( COUNTROWS(job_offers), job_offers[scraped_date] = TODAY() )",
+            "formatString": "#,##0",
+            "displayFolder": "📈 Trendy",
+            "lineageTag": "m-new-today"
+          },
+          {
+            "name": "New Offers This Week",
+            "expression": "CALCULATE( COUNTROWS(job_offers), DATESINPERIOD(dim_Date[Date], TODAY(), -7, DAY) )",
+            "formatString": "#,##0",
+            "displayFolder": "📈 Trendy",
+            "lineageTag": "m-new-this-week"
+          },
+          {
+            "name": "Offers Rolling 7D Avg",
+            "expression": "AVERAGEX( DATESINPERIOD(dim_Date[Date], MAX(dim_Date[Date]), -7, DAY), CALCULATE(COUNTROWS(job_offers)) )",
+            "formatString": "#,##0.0",
+            "displayFolder": "📈 Trendy",
+            "lineageTag": "m-rolling-7d"
+          },
+          {
+            "name": "Offers Rolling 30D Avg",
+            "expression": "AVERAGEX( DATESINPERIOD(dim_Date[Date], MAX(dim_Date[Date]), -30, DAY), CALCULATE(COUNTROWS(job_offers)) )",
+            "formatString": "#,##0.0",
+            "displayFolder": "📈 Trendy",
+            "lineageTag": "m-rolling-30d"
+          },
+          {
+            "name": "Offers Running Total",
+            "expression": "CALCULATE( [Total Offers], FILTER( ALL(dim_Date[Date]), dim_Date[Date] <= MAX(dim_Date[Date]) ) )",
+            "formatString": "#,##0",
+            "displayFolder": "📈 Trendy",
+            "lineageTag": "m-running-total"
+          },
+          {
+            "name": "Offers YTD",
+            "expression": "CALCULATE( [Total Offers], DATESYTD(dim_Date[Date]) )",
+            "formatString": "#,##0",
+            "displayFolder": "📈 Trendy",
+            "lineageTag": "m-offers-ytd"
+          },
+          {
+            "name": "Source Share %",
+            "expression": "DIVIDE([Total Offers], CALCULATE([Total Offers], ALL(job_offers[source])), 0)",
+            "formatString": "0.0%",
+            "displayFolder": "🌐 Źródła",
+            "lineageTag": "m-source-share"
+          },
+          {
+            "name": "Source Salary Transparency %",
+            "expression": "DIVIDE( [Offers With Salary], [Total Offers], 0 )",
+            "formatString": "0.0%",
+            "displayFolder": "🌐 Źródła",
+            "lineageTag": "m-source-salary-transparency"
+          },
+          {
+            "name": "Avg Data Quality",
+            "expression": "AVERAGE(job_offers[Data Completeness Score])",
+            "formatString": "0.0%",
+            "displayFolder": "🌐 Źródła",
+            "lineageTag": "m-avg-data-quality"
+          },
+          {
+            "name": "Remote Share %",
+            "expression": "DIVIDE( CALCULATE(COUNTROWS(job_offers), job_offers[work_mode] = \"remote\"), COUNTROWS(job_offers), 0 )",
+            "formatString": "0.0%",
+            "displayFolder": "🗺️ Lokalizacja",
+            "lineageTag": "m-remote-share"
+          },
+          {
+            "name": "Remote Salary Premium",
+            "expression": [
+              "VAR _remoteAvg = CALCULATE([Avg Salary Midpoint], job_offers[work_mode] = \"remote\")",
+              "VAR _onsiteAvg = CALCULATE([Avg Salary Midpoint], job_offers[work_mode] = \"onsite\")",
+              "RETURN",
+              "    IF(",
+              "        NOT ISBLANK(_remoteAvg) && NOT ISBLANK(_onsiteAvg) && _onsiteAvg > 0,",
+              "        DIVIDE(_remoteAvg - _onsiteAvg, _onsiteAvg, 0),",
+              "        BLANK()",
+              "    )"
+            ],
+            "formatString": "+0.0%;-0.0%;0.0%",
+            "displayFolder": "🗺️ Lokalizacja",
+            "lineageTag": "m-remote-premium"
+          },
+          {
+            "name": "Top City",
+            "expression": [
+              "VAR _table =",
+              "    ADDCOLUMNS(",
+              "        VALUES(job_offers[location_city]),",
+              "        \"@count\", CALCULATE(COUNTROWS(job_offers))",
+              "    )",
+              "RETURN",
+              "    MAXX(TOPN(1, _table, [@count], DESC), job_offers[location_city])"
+            ],
+            "displayFolder": "🗺️ Lokalizacja",
+            "lineageTag": "m-top-city"
+          },
+          {
+            "name": "City Concentration HHI",
+            "expression": [
+              "VAR _total = [Total Offers]",
+              "VAR _shares =",
+              "    ADDCOLUMNS(",
+              "        VALUES(job_offers[location_city]),",
+              "        \"@share\", DIVIDE(CALCULATE(COUNTROWS(job_offers)), _total, 0)",
+              "    )",
+              "RETURN",
+              "    SUMX(_shares, [@share] ^ 2)"
+            ],
+            "formatString": "0.000",
+            "displayFolder": "🗺️ Lokalizacja",
+            "lineageTag": "m-hhi"
+          },
+          {
+            "name": "Warsaw Share %",
+            "expression": "DIVIDE( CALCULATE(COUNTROWS(job_offers), job_offers[location_city] = \"Warszawa\"), COUNTROWS(job_offers), 0 )",
+            "formatString": "0.0%",
+            "displayFolder": "🗺️ Lokalizacja",
+            "lineageTag": "m-warsaw-share"
+          },
+          {
+            "name": "Avg Offers Per Company",
+            "expression": "DIVIDE([Total Offers], [Unique Companies], 0)",
+            "formatString": "#,##0.0",
+            "displayFolder": "🏢 Firmy",
+            "lineageTag": "m-avg-per-company"
+          },
+          {
+            "name": "Large Employers Count",
+            "expression": [
+              "CALCULATE(",
+              "    DISTINCTCOUNT(job_offers[company_name]),",
+              "    FILTER(",
+              "        VALUES(job_offers[company_name]),",
+              "        CALCULATE(COUNTROWS(job_offers)) >= 5",
+              "    )",
+              ")"
+            ],
+            "formatString": "#,##0",
+            "displayFolder": "🏢 Firmy",
+            "lineageTag": "m-large-employers"
+          },
+          {
+            "name": "Top10 Companies Share %",
+            "expression": [
+              "VAR _top10 =",
+              "    TOPN(",
+              "        10,",
+              "        SUMMARIZE(job_offers, job_offers[company_name]),",
+              "        CALCULATE(COUNTROWS(job_offers)),",
+              "        DESC",
+              "    )",
+              "VAR _top10Count =",
+              "    CALCULATE(",
+              "        COUNTROWS(job_offers),",
+              "        TREATAS(_top10, job_offers[company_name])",
+              "    )",
+              "RETURN",
+              "    DIVIDE(_top10Count, CALCULATE(COUNTROWS(job_offers), ALL(job_offers[company_name])), 0)"
+            ],
+            "formatString": "0.0%",
+            "displayFolder": "🏢 Firmy",
+            "lineageTag": "m-top10-share"
+          },
+          {
+            "name": "Company Remote Availability",
+            "expression": [
+              "VAR _hasRemote =",
+              "    CALCULATE(",
+              "        COUNTROWS(job_offers),",
+              "        job_offers[work_mode] = \"remote\"",
+              "    )",
+              "RETURN",
+              "    IF(_hasRemote > 0, \"Tak\", \"Nie\")"
+            ],
+            "displayFolder": "🏢 Firmy",
+            "lineageTag": "m-company-remote"
+          },
+          {
+            "name": "Junior Senior Salary Gap",
+            "expression": [
+              "VAR _junior = CALCULATE([Avg Salary Midpoint], job_offers[seniority] = \"junior\")",
+              "VAR _senior = CALCULATE([Avg Salary Midpoint], job_offers[seniority] = \"senior\")",
+              "RETURN",
+              "    IF(",
+              "        NOT ISBLANK(_junior) && NOT ISBLANK(_senior),",
+              "        _senior - _junior,",
+              "        BLANK()",
+              "    )"
+            ],
+            "formatString": "#,##0",
+            "displayFolder": "🎯 Seniority",
+            "lineageTag": "m-jr-sr-gap"
+          },
+          {
+            "name": "Senior Junior Multiplier",
+            "expression": [
+              "VAR _junior = CALCULATE([Median Salary Midpoint], job_offers[seniority] = \"junior\")",
+              "VAR _senior = CALCULATE([Median Salary Midpoint], job_offers[seniority] = \"senior\")",
+              "RETURN",
+              "    IF(",
+              "        NOT ISBLANK(_junior) && _junior > 0,",
+              "        DIVIDE(_senior, _junior),",
+              "        BLANK()",
+              "    )"
+            ],
+            "formatString": "0.0x",
+            "displayFolder": "🎯 Seniority",
+            "lineageTag": "m-sr-jr-multi"
+          },
+          {
+            "name": "Seniority Share %",
+            "expression": "DIVIDE( COUNTROWS(job_offers), CALCULATE(COUNTROWS(job_offers), ALL(job_offers[seniority])), 0 )",
+            "formatString": "0.0%",
+            "displayFolder": "🎯 Seniority",
+            "lineageTag": "m-seniority-share"
+          },
+          {
+            "name": "Market Demand Index",
+            "expression": [
+              "VAR _junior = CALCULATE(COUNTROWS(job_offers), job_offers[seniority] = \"junior\")",
+              "VAR _senior = CALCULATE(COUNTROWS(job_offers), job_offers[seniority] = \"senior\")",
+              "RETURN",
+              "    IF(",
+              "        _senior > 0,",
+              "        DIVIDE(_junior, _senior),",
+              "        BLANK()",
+              "    )"
+            ],
+            "formatString": "0.00",
+            "displayFolder": "🎯 Seniority",
+            "lineageTag": "m-demand-index"
+          },
+          {
+            "name": "Completeness Company %",
+            "expression": "DIVIDE( CALCULATE(COUNTROWS(job_offers), NOT ISBLANK(job_offers[company_name])), COUNTROWS(job_offers), 0 )",
+            "formatString": "0.0%",
+            "displayFolder": "🔧 Data Quality",
+            "lineageTag": "m-comp-company"
+          },
+          {
+            "name": "Completeness City %",
+            "expression": "DIVIDE( CALCULATE(COUNTROWS(job_offers), NOT ISBLANK(job_offers[location_city])), COUNTROWS(job_offers), 0 )",
+            "formatString": "0.0%",
+            "displayFolder": "🔧 Data Quality",
+            "lineageTag": "m-comp-city"
+          },
+          {
+            "name": "Completeness Salary %",
+            "expression": "[Salary Transparency %]",
+            "formatString": "0.0%",
+            "displayFolder": "🔧 Data Quality",
+            "lineageTag": "m-comp-salary"
+          },
+          {
+            "name": "Completeness Seniority %",
+            "expression": "DIVIDE( CALCULATE(COUNTROWS(job_offers), job_offers[seniority] <> \"unknown\"), COUNTROWS(job_offers), 0 )",
+            "formatString": "0.0%",
+            "displayFolder": "🔧 Data Quality",
+            "lineageTag": "m-comp-seniority"
+          },
+          {
+            "name": "Completeness WorkMode %",
+            "expression": "DIVIDE( CALCULATE(COUNTROWS(job_offers), job_offers[work_mode] <> \"unknown\"), COUNTROWS(job_offers), 0 )",
+            "formatString": "0.0%",
+            "displayFolder": "🔧 Data Quality",
+            "lineageTag": "m-comp-workmode"
+          },
+          {
+            "name": "Avg Data Completeness",
+            "expression": "AVERAGE(job_offers[Data Completeness Score])",
+            "formatString": "0.0%",
+            "displayFolder": "🔧 Data Quality",
+            "lineageTag": "m-avg-completeness"
+          },
+          {
+            "name": "Last Scrape Time",
+            "expression": "MAX(job_offers[scraped_at])",
+            "formatString": "yyyy-MM-dd HH:mm",
+            "displayFolder": "🔧 Data Quality",
+            "lineageTag": "m-last-scrape"
+          },
+          {
+            "name": "Data Freshness Hours",
+            "expression": "DATEDIFF(MAX(job_offers[scraped_at]), NOW(), HOUR)",
+            "formatString": "#,##0",
+            "displayFolder": "🔧 Data Quality",
+            "lineageTag": "m-freshness-hours"
+          },
+          {
+            "name": "Data Freshness Status",
+            "expression": [
+              "VAR _hours = [Data Freshness Hours]",
+              "RETURN",
+              "    SWITCH(",
+              "        TRUE(),",
+              "        _hours <= 6,  \"Świeże\",",
+              "        _hours <= 24, \"Do odświeżenia\",",
+              "        \"Nieaktualne\"",
+              "    )"
+            ],
+            "displayFolder": "🔧 Data Quality",
+            "lineageTag": "m-freshness-status"
+          },
+          {
+            "name": "Report Title",
+            "expression": [
+              "VAR _sources = CONCATENATEX(VALUES(dim_Source[SourceName]), dim_Source[SourceName], \", \")",
+              "VAR _cities = IF(",
+              "    ISFILTERED(job_offers[location_city]),",
+              "    \" | \" & CONCATENATEX(VALUES(job_offers[location_city]), job_offers[location_city], \", \"),",
+              "    \"\"",
+              ")",
+              "RETURN",
+              "    \"Rynek pracy — \" & _sources & _cities"
+            ],
+            "displayFolder": "🏷️ Labels",
+            "lineageTag": "m-report-title"
+          },
+          {
+            "name": "Active Filters Tooltip",
+            "expression": [
+              "VAR _src = IF(ISFILTERED(job_offers[source]),",
+              "    \"Źródła: \" & CONCATENATEX(VALUES(job_offers[source]), job_offers[source], \", \"),",
+              "    \"Wszystkie źródła\")",
+              "VAR _city = IF(ISFILTERED(job_offers[location_city]),",
+              "    \" | Miasta: \" & CONCATENATEX(VALUES(job_offers[location_city]), job_offers[location_city], \", \"),",
+              "    \"\")",
+              "VAR _sen = IF(ISFILTERED(job_offers[seniority]),",
+              "    \" | Poziomy: \" & CONCATENATEX(VALUES(job_offers[seniority]), job_offers[seniority], \", \"),",
+              "    \"\")",
+              "RETURN",
+              "    _src & _city & _sen"
+            ],
+            "displayFolder": "🏷️ Labels",
+            "lineageTag": "m-active-filters"
+          },
+          {
+            "name": "Salary Competitiveness Index",
+            "expression": [
+              "VAR _companySalary = [Avg Salary Midpoint]",
+              "VAR _marketSalary = CALCULATE([Avg Salary Midpoint], ALL(job_offers[company_name]))",
+              "RETURN",
+              "    IF(",
+              "        NOT ISBLANK(_companySalary) && NOT ISBLANK(_marketSalary) && _marketSalary > 0,",
+              "        DIVIDE(_companySalary, _marketSalary) * 100,",
+              "        BLANK()",
+              "    )"
+            ],
+            "formatString": "0.0",
+            "displayFolder": "🧮 Advanced",
+            "lineageTag": "m-salary-competitiveness"
+          },
+          {
+            "name": "Offer Velocity",
+            "expression": [
+              "VAR _period = DATEDIFF(MIN(dim_Date[Date]), MAX(dim_Date[Date]), DAY)",
+              "RETURN",
+              "    IF(_period > 0, DIVIDE([Total Offers], _period), BLANK())"
+            ],
+            "formatString": "#,##0.0",
+            "displayFolder": "🧮 Advanced",
+            "lineageTag": "m-offer-velocity"
+          },
+          {
+            "name": "Offer Churn Rate",
+            "expression": "DIVIDE( [Inactive Offers], [Total Offers], 0 )",
+            "formatString": "0.0%",
+            "displayFolder": "🧮 Advanced",
+            "lineageTag": "m-churn-rate"
+          },
+          {
+            "name": "Location Diversity Index",
+            "expression": [
+              "VAR _total = [Total Offers]",
+              "VAR _shares =",
+              "    ADDCOLUMNS(",
+              "        FILTER(",
+              "            VALUES(job_offers[location_city]),",
+              "            CALCULATE(COUNTROWS(job_offers)) > 0",
+              "        ),",
+              "        \"@p\", DIVIDE(CALCULATE(COUNTROWS(job_offers)), _total, 0)",
+              "    )",
+              "RETURN",
+              "    -SUMX(",
+              "        _shares,",
+              "        IF([@p] > 0, [@p] * LOG([@p], 2), 0)",
+              "    )"
+            ],
+            "formatString": "0.00",
+            "displayFolder": "🧮 Advanced",
+            "lineageTag": "m-diversity-index"
+          },
+          {
+            "name": "Market Heatmap Score",
+            "expression": [
+              "VAR _offerScore = DIVIDE(",
+              "    [Total Offers],",
+              "    CALCULATE([Total Offers], ALL(job_offers[location_city], job_offers[seniority])),",
+              "    0",
+              ") * 50",
+              "VAR _salaryScore = DIVIDE(",
+              "    [Avg Salary Midpoint],",
+              "    CALCULATE([Avg Salary Midpoint], ALL(job_offers[location_city], job_offers[seniority])),",
+              "    0",
+              ") * 50",
+              "RETURN",
+              "    _offerScore + _salaryScore"
+            ],
+            "formatString": "0.0",
+            "displayFolder": "🧮 Advanced",
+            "lineageTag": "m-heatmap-score"
+          }
+        ],
+        "hierarchies": [
+          {
+            "name": "Location",
+            "lineageTag": "h-location",
+            "levels": [
+              {
+                "name": "Region",
+                "ordinal": 0,
+                "column": "location_region",
+                "lineageTag": "hl-region"
+              },
+              {
+                "name": "City",
+                "ordinal": 1,
+                "column": "location_city",
+                "lineageTag": "hl-city"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "scrape_log",
+        "lineageTag": "t-scrape-log",
+        "columns": [
+          {
+            "name": "run_id",
+            "dataType": "string",
+            "sourceColumn": "run_id",
+            "lineageTag": "c-sl-run-id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "source",
+            "dataType": "string",
+            "sourceColumn": "source",
+            "lineageTag": "c-sl-source",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "started_at",
+            "dataType": "dateTime",
+            "sourceColumn": "started_at",
+            "formatString": "yyyy-MM-dd HH:mm:ss",
+            "lineageTag": "c-sl-started",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "finished_at",
+            "dataType": "dateTime",
+            "sourceColumn": "finished_at",
+            "formatString": "yyyy-MM-dd HH:mm:ss",
+            "lineageTag": "c-sl-finished",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "offers_scraped",
+            "dataType": "int64",
+            "sourceColumn": "offers_scraped",
+            "lineageTag": "c-sl-scraped",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "offers_new",
+            "dataType": "int64",
+            "sourceColumn": "offers_new",
+            "lineageTag": "c-sl-new",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "offers_updated",
+            "dataType": "int64",
+            "sourceColumn": "offers_updated",
+            "lineageTag": "c-sl-updated",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "errors",
+            "dataType": "int64",
+            "sourceColumn": "errors",
+            "lineageTag": "c-sl-errors",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "status",
+            "dataType": "string",
+            "sourceColumn": "status",
+            "lineageTag": "c-sl-status",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "duration_seconds",
+            "dataType": "double",
+            "sourceColumn": "duration_seconds",
+            "formatString": "#,##0.0",
+            "lineageTag": "c-sl-duration",
+            "summarizeBy": "average"
+          },
+          {
+            "name": "scrape_date",
+            "dataType": "dateTime",
+            "sourceColumn": "scrape_date",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "c-sl-date",
+            "dataCategory": "Date",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "scrape_log",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = MySQL.Database(#\"pDBServer\", #\"pDBName\"),",
+                "    scrape_log = Source{[Schema=\"jobdb\", Item=\"scrape_log\"]}[Data],",
+                "",
+                "    TypedColumns = Table.TransformColumnTypes(scrape_log, {",
+                "        {\"run_id\", type text}, {\"source\", type text},",
+                "        {\"started_at\", type datetime}, {\"finished_at\", type datetime},",
+                "        {\"offers_scraped\", Int64.Type}, {\"offers_new\", Int64.Type},",
+                "        {\"offers_updated\", Int64.Type}, {\"errors\", Int64.Type},",
+                "        {\"status\", type text}",
+                "    }),",
+                "",
+                "    AddDuration = Table.AddColumn(TypedColumns, \"duration_seconds\", each",
+                "        Duration.TotalSeconds([finished_at] - [started_at]),",
+                "        type number",
+                "    ),",
+                "",
+                "    AddDate = Table.AddColumn(AddDuration, \"scrape_date\", each",
+                "        DateTime.Date([started_at]), type date",
+                "    )",
+                "in",
+                "    AddDate"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Scrape Success Rate",
+            "expression": "DIVIDE( CALCULATE(COUNTROWS(scrape_log), scrape_log[status] = \"success\"), COUNTROWS(scrape_log), 0 )",
+            "formatString": "0.0%",
+            "displayFolder": "🔧 Data Quality",
+            "lineageTag": "m-scrape-success"
+          },
+          {
+            "name": "Avg Scrape Duration",
+            "expression": "AVERAGE(scrape_log[duration_seconds])",
+            "formatString": "#,##0.0",
+            "displayFolder": "🔧 Data Quality",
+            "lineageTag": "m-scrape-duration"
+          },
+          {
+            "name": "Total Scrape Errors",
+            "expression": "SUM(scrape_log[errors])",
+            "formatString": "#,##0",
+            "displayFolder": "🔧 Data Quality",
+            "lineageTag": "m-scrape-errors"
+          }
+        ]
+      },
+      {
+        "name": "job_snapshots",
+        "lineageTag": "t-job-snapshots",
+        "columns": [
+          {
+            "name": "snapshot_date",
+            "dataType": "dateTime",
+            "sourceColumn": "snapshot_date",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "c-snap-date",
+            "dataCategory": "Date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "offer_id",
+            "dataType": "string",
+            "sourceColumn": "offer_id",
+            "lineageTag": "c-snap-offer",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "salary_min",
+            "dataType": "double",
+            "sourceColumn": "salary_min",
+            "formatString": "#,##0",
+            "lineageTag": "c-snap-salmin",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "salary_max",
+            "dataType": "double",
+            "sourceColumn": "salary_max",
+            "formatString": "#,##0",
+            "lineageTag": "c-snap-salmax",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "is_active",
+            "dataType": "boolean",
+            "sourceColumn": "is_active",
+            "lineageTag": "c-snap-active",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "job_snapshots",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = MySQL.Database(#\"pDBServer\", #\"pDBName\"),",
+                "    snapshots = Source{[Schema=\"jobdb\", Item=\"job_snapshots\"]}[Data],",
+                "",
+                "    TypedColumns = Table.TransformColumnTypes(snapshots, {",
+                "        {\"snapshot_date\", type date}, {\"offer_id\", type text},",
+                "        {\"salary_min\", type number}, {\"salary_max\", type number},",
+                "        {\"is_active\", type logical}",
+                "    })",
+                "in",
+                "    TypedColumns"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "daily_stats",
+        "lineageTag": "t-daily-stats",
+        "columns": [
+          {
+            "name": "stat_date",
+            "dataType": "dateTime",
+            "sourceColumn": "stat_date",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "c-ds-date",
+            "dataCategory": "Date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "source",
+            "dataType": "string",
+            "sourceColumn": "source",
+            "lineageTag": "c-ds-source",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "category",
+            "dataType": "string",
+            "sourceColumn": "category",
+            "lineageTag": "c-ds-category",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "location_city",
+            "dataType": "string",
+            "sourceColumn": "location_city",
+            "lineageTag": "c-ds-city",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "total_offers",
+            "dataType": "int64",
+            "sourceColumn": "total_offers",
+            "lineageTag": "c-ds-total",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "offers_with_salary",
+            "dataType": "int64",
+            "sourceColumn": "offers_with_salary",
+            "lineageTag": "c-ds-wsal",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "avg_salary_min",
+            "dataType": "double",
+            "sourceColumn": "avg_salary_min",
+            "formatString": "#,##0",
+            "lineageTag": "c-ds-avgmin",
+            "summarizeBy": "average"
+          },
+          {
+            "name": "avg_salary_max",
+            "dataType": "double",
+            "sourceColumn": "avg_salary_max",
+            "formatString": "#,##0",
+            "lineageTag": "c-ds-avgmax",
+            "summarizeBy": "average"
+          },
+          {
+            "name": "new_offers",
+            "dataType": "int64",
+            "sourceColumn": "new_offers",
+            "lineageTag": "c-ds-new",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "expired_offers",
+            "dataType": "int64",
+            "sourceColumn": "expired_offers",
+            "lineageTag": "c-ds-expired",
+            "summarizeBy": "sum"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "daily_stats",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = MySQL.Database(#\"pDBServer\", #\"pDBName\"),",
+                "    daily_stats = Source{[Schema=\"jobdb\", Item=\"daily_stats\"]}[Data],",
+                "",
+                "    TypedColumns = Table.TransformColumnTypes(daily_stats, {",
+                "        {\"stat_date\", type date}, {\"source\", type text},",
+                "        {\"category\", type text}, {\"location_city\", type text},",
+                "        {\"total_offers\", Int64.Type}, {\"offers_with_salary\", Int64.Type},",
+                "        {\"avg_salary_min\", type number}, {\"avg_salary_max\", type number},",
+                "        {\"new_offers\", Int64.Type}, {\"expired_offers\", Int64.Type}",
+                "    })",
+                "in",
+                "    TypedColumns"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "dim_Date",
+        "lineageTag": "t-dim-date",
+        "dataCategory": "Time",
+        "columns": [
+          {
+            "name": "Date",
+            "dataType": "dateTime",
+            "isKey": true,
+            "sourceColumn": "Date",
+            "formatString": "yyyy-MM-dd",
+            "lineageTag": "c-dd-date",
+            "dataCategory": "Date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Year",
+            "dataType": "int64",
+            "sourceColumn": "Year",
+            "lineageTag": "c-dd-year",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Month Number",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "Month Number",
+            "lineageTag": "c-dd-mnum",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Month Name",
+            "dataType": "string",
+            "sourceColumn": "Month Name",
+            "sortByColumn": "Month Number",
+            "lineageTag": "c-dd-mname",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Month Short",
+            "dataType": "string",
+            "sourceColumn": "Month Short",
+            "sortByColumn": "Month Number",
+            "lineageTag": "c-dd-mshort",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Year-Month",
+            "dataType": "string",
+            "sourceColumn": "Year-Month",
+            "sortByColumn": "Month-Year Sort",
+            "lineageTag": "c-dd-ym",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Quarter",
+            "dataType": "string",
+            "sourceColumn": "Quarter",
+            "lineageTag": "c-dd-q",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Year-Quarter",
+            "dataType": "string",
+            "sourceColumn": "Year-Quarter",
+            "lineageTag": "c-dd-yq",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Day of Week",
+            "dataType": "int64",
+            "sourceColumn": "Day of Week",
+            "lineageTag": "c-dd-dow",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Day Name",
+            "dataType": "string",
+            "sourceColumn": "Day Name",
+            "sortByColumn": "Day of Week",
+            "lineageTag": "c-dd-dname",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Week Number",
+            "dataType": "int64",
+            "sourceColumn": "Week Number",
+            "lineageTag": "c-dd-wnum",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Is Weekend",
+            "dataType": "boolean",
+            "sourceColumn": "Is Weekend",
+            "lineageTag": "c-dd-iswe",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Is Current Month",
+            "dataType": "boolean",
+            "sourceColumn": "Is Current Month",
+            "lineageTag": "c-dd-iscm",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Month-Year Sort",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "Month-Year Sort",
+            "lineageTag": "c-dd-mysort",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Relative Day",
+            "dataType": "int64",
+            "sourceColumn": "Relative Day",
+            "lineageTag": "c-dd-relday",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "dim_Date",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": [
+                "VAR _minDate = MIN(job_offers[scraped_at])",
+                "VAR _maxDate = MAX(job_offers[scraped_at])",
+                "VAR _startDate = DATE(YEAR(_minDate), MONTH(_minDate), 1)",
+                "VAR _endDate = EOMONTH(_maxDate, 1)",
+                "VAR _dates = CALENDAR(_startDate, _endDate)",
+                "RETURN",
+                "    ADDCOLUMNS(",
+                "        _dates,",
+                "        \"Year\",             YEAR([Date]),",
+                "        \"Month Number\",     MONTH([Date]),",
+                "        \"Month Name\",       FORMAT([Date], \"MMMM\", \"pl-PL\"),",
+                "        \"Month Short\",      FORMAT([Date], \"MMM\", \"pl-PL\"),",
+                "        \"Year-Month\",       FORMAT([Date], \"YYYY-MM\"),",
+                "        \"Quarter\",          \"Q\" & FORMAT([Date], \"Q\"),",
+                "        \"Year-Quarter\",     FORMAT([Date], \"YYYY\") & \"-Q\" & FORMAT([Date], \"Q\"),",
+                "        \"Day of Week\",      WEEKDAY([Date], 2),",
+                "        \"Day Name\",         FORMAT([Date], \"dddd\", \"pl-PL\"),",
+                "        \"Week Number\",      WEEKNUM([Date], 2),",
+                "        \"Is Weekend\",       IF(WEEKDAY([Date], 2) >= 6, TRUE(), FALSE()),",
+                "        \"Is Current Month\", IF(",
+                "            YEAR([Date]) = YEAR(TODAY()) && MONTH([Date]) = MONTH(TODAY()),",
+                "            TRUE(), FALSE()",
+                "        ),",
+                "        \"Month-Year Sort\",  YEAR([Date]) * 100 + MONTH([Date]),",
+                "        \"Relative Day\",     DATEDIFF([Date], TODAY(), DAY) * -1",
+                "    )"
+              ]
+            }
+          }
+        ],
+        "hierarchies": [
+          {
+            "name": "Date Hierarchy",
+            "lineageTag": "h-date",
+            "levels": [
+              {
+                "name": "Year",
+                "ordinal": 0,
+                "column": "Year",
+                "lineageTag": "hl-year"
+              },
+              {
+                "name": "Quarter",
+                "ordinal": 1,
+                "column": "Quarter",
+                "lineageTag": "hl-quarter"
+              },
+              {
+                "name": "Month Name",
+                "ordinal": 2,
+                "column": "Month Name",
+                "lineageTag": "hl-month"
+              },
+              {
+                "name": "Date",
+                "ordinal": 3,
+                "column": "Date",
+                "lineageTag": "hl-date"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "dim_Source",
+        "lineageTag": "t-dim-source",
+        "columns": [
+          {
+            "name": "SourceKey",
+            "dataType": "string",
+            "isKey": true,
+            "sourceColumn": "SourceKey",
+            "lineageTag": "c-dsrc-key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "SourceName",
+            "dataType": "string",
+            "sourceColumn": "SourceName",
+            "lineageTag": "c-dsrc-name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "SourceURL",
+            "dataType": "string",
+            "sourceColumn": "SourceURL",
+            "lineageTag": "c-dsrc-url",
+            "dataCategory": "WebURL",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "SourceType",
+            "dataType": "string",
+            "sourceColumn": "SourceType",
+            "lineageTag": "c-dsrc-type",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "dim_Source",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": [
+                "DATATABLE(",
+                "    \"SourceKey\",   STRING,",
+                "    \"SourceName\",  STRING,",
+                "    \"SourceURL\",   STRING,",
+                "    \"SourceType\",  STRING,",
+                "    {",
+                "        { \"pracapl\",     \"Praca.pl\",      \"https://www.praca.pl\",      \"Job Board\"   },",
+                "        { \"justjoinit\",  \"JustJoin.it\",   \"https://justjoin.it\",       \"IT Niche\"    },",
+                "        { \"pracuj\",      \"Pracuj.pl\",     \"https://www.pracuj.pl\",     \"Job Board\"   },",
+                "        { \"rocketjobs\",  \"RocketJobs.pl\", \"https://rocketjobs.pl\",     \"IT Niche\"    },",
+                "        { \"jooble\",      \"Jooble\",        \"https://pl.jooble.org\",     \"Aggregator\"  }",
+                "    }",
+                ")"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "dim_Seniority",
+        "lineageTag": "t-dim-seniority",
+        "columns": [
+          {
+            "name": "SeniorityKey",
+            "dataType": "string",
+            "isKey": true,
+            "sourceColumn": "SeniorityKey",
+            "lineageTag": "c-dsen-key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "SeniorityName",
+            "dataType": "string",
+            "sourceColumn": "SeniorityName",
+            "lineageTag": "c-dsen-name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "SeniorityOrder",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "SeniorityOrder",
+            "lineageTag": "c-dsen-order",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "SeniorityGroup",
+            "dataType": "string",
+            "sourceColumn": "SeniorityGroup",
+            "lineageTag": "c-dsen-group",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "dim_Seniority",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": [
+                "DATATABLE(",
+                "    \"SeniorityKey\",    STRING,",
+                "    \"SeniorityName\",   STRING,",
+                "    \"SeniorityOrder\",  INTEGER,",
+                "    \"SeniorityGroup\",  STRING,",
+                "    {",
+                "        { \"intern\",   \"Intern / Stażysta\",  1, \"Junior\"     },",
+                "        { \"junior\",   \"Junior\",             2, \"Junior\"     },",
+                "        { \"mid\",      \"Mid / Regular\",      3, \"Mid\"        },",
+                "        { \"senior\",   \"Senior\",             4, \"Senior\"     },",
+                "        { \"lead\",     \"Lead / Tech Lead\",   5, \"Senior\"     },",
+                "        { \"manager\",  \"Manager / Kierownik\",6, \"Management\" },",
+                "        { \"unknown\",  \"Nieokreślony\",       7, \"Unknown\"    }",
+                "    }",
+                ")"
+              ]
+            }
+          }
+        ],
+        "hierarchies": [
+          {
+            "name": "Seniority Hierarchy",
+            "lineageTag": "h-seniority",
+            "levels": [
+              {
+                "name": "Group",
+                "ordinal": 0,
+                "column": "SeniorityGroup",
+                "lineageTag": "hl-sen-group"
+              },
+              {
+                "name": "Level",
+                "ordinal": 1,
+                "column": "SeniorityName",
+                "lineageTag": "hl-sen-level"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "dim_WorkMode",
+        "lineageTag": "t-dim-workmode",
+        "columns": [
+          {
+            "name": "WorkModeKey",
+            "dataType": "string",
+            "isKey": true,
+            "sourceColumn": "WorkModeKey",
+            "lineageTag": "c-dwm-key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "WorkModeName",
+            "dataType": "string",
+            "sourceColumn": "WorkModeName",
+            "lineageTag": "c-dwm-name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "WorkModeOrder",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "WorkModeOrder",
+            "lineageTag": "c-dwm-order",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "dim_WorkMode",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": [
+                "DATATABLE(",
+                "    \"WorkModeKey\",   STRING,",
+                "    \"WorkModeName\",  STRING,",
+                "    \"WorkModeOrder\", INTEGER,",
+                "    {",
+                "        { \"remote\",  \"Praca zdalna\",      1 },",
+                "        { \"hybrid\",  \"Praca hybrydowa\",   2 },",
+                "        { \"onsite\",  \"Praca stacjonarna\", 3 },",
+                "        { \"unknown\", \"Nieokreślony\",      4 }",
+                "    }",
+                ")"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "dim_Contract",
+        "lineageTag": "t-dim-contract",
+        "columns": [
+          {
+            "name": "ContractKey",
+            "dataType": "string",
+            "isKey": true,
+            "sourceColumn": "ContractKey",
+            "lineageTag": "c-dc-key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "ContractName",
+            "dataType": "string",
+            "sourceColumn": "ContractName",
+            "lineageTag": "c-dc-name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "ContractGroup",
+            "dataType": "string",
+            "sourceColumn": "ContractGroup",
+            "lineageTag": "c-dc-group",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "ContractOrder",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "ContractOrder",
+            "lineageTag": "c-dc-order",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "dim_Contract",
+            "mode": "import",
+            "source": {
+              "type": "calculated",
+              "expression": [
+                "DATATABLE(",
+                "    \"ContractKey\",    STRING,",
+                "    \"ContractName\",   STRING,",
+                "    \"ContractGroup\",  STRING,",
+                "    \"ContractOrder\",  INTEGER,",
+                "    {",
+                "        { \"UoP\",             \"Umowa o pracę\",       \"Etat\",          1 },",
+                "        { \"B2B\",             \"B2B / Kontrakt\",      \"Kontrakt\",      2 },",
+                "        { \"UoP + B2B\",       \"UoP + B2B\",           \"Mieszane\",      3 },",
+                "        { \"Umowa zlecenie\",  \"Umowa zlecenie\",      \"Cywilnoprawna\", 4 },",
+                "        { \"Staż\",            \"Staż / Praktyki\",     \"Staż\",          5 },",
+                "        { \"Inne\",            \"Inna forma\",          \"Inne\",          6 },",
+                "        { \"Nieokreślony\",    \"Nieokreślony\",        \"Nieokreślony\",  7 }",
+                "    }",
+                ")"
+              ]
+            }
+          }
+        ],
+        "hierarchies": [
+          {
+            "name": "Contract Hierarchy",
+            "lineageTag": "h-contract",
+            "levels": [
+              {
+                "name": "Group",
+                "ordinal": 0,
+                "column": "ContractGroup",
+                "lineageTag": "hl-ct-group"
+              },
+              {
+                "name": "Type",
+                "ordinal": 1,
+                "column": "ContractName",
+                "lineageTag": "hl-ct-type"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "rel_offers_source",
+        "fromTable": "job_offers",
+        "fromColumn": "source",
+        "toTable": "dim_Source",
+        "toColumn": "SourceKey"
+      },
+      {
+        "name": "rel_offers_seniority",
+        "fromTable": "job_offers",
+        "fromColumn": "seniority",
+        "toTable": "dim_Seniority",
+        "toColumn": "SeniorityKey"
+      },
+      {
+        "name": "rel_offers_workmode",
+        "fromTable": "job_offers",
+        "fromColumn": "work_mode",
+        "toTable": "dim_WorkMode",
+        "toColumn": "WorkModeKey"
+      },
+      {
+        "name": "rel_offers_contract",
+        "fromTable": "job_offers",
+        "fromColumn": "employment_category",
+        "toTable": "dim_Contract",
+        "toColumn": "ContractKey"
+      },
+      {
+        "name": "rel_offers_date_scraped",
+        "fromTable": "job_offers",
+        "fromColumn": "scraped_date",
+        "toTable": "dim_Date",
+        "toColumn": "Date"
+      },
+      {
+        "name": "rel_offers_date_published",
+        "fromTable": "job_offers",
+        "fromColumn": "published_date",
+        "toTable": "dim_Date",
+        "toColumn": "Date",
+        "isActive": false
+      },
+      {
+        "name": "rel_snapshots_offers",
+        "fromTable": "job_snapshots",
+        "fromColumn": "offer_id",
+        "toTable": "job_offers",
+        "toColumn": "id"
+      },
+      {
+        "name": "rel_snapshots_date",
+        "fromTable": "job_snapshots",
+        "fromColumn": "snapshot_date",
+        "toTable": "dim_Date",
+        "toColumn": "Date"
+      },
+      {
+        "name": "rel_dailystats_date",
+        "fromTable": "daily_stats",
+        "fromColumn": "stat_date",
+        "toTable": "dim_Date",
+        "toColumn": "Date"
+      },
+      {
+        "name": "rel_dailystats_source",
+        "fromTable": "daily_stats",
+        "fromColumn": "source",
+        "toTable": "dim_Source",
+        "toColumn": "SourceKey"
+      },
+      {
+        "name": "rel_scrapelog_date",
+        "fromTable": "scrape_log",
+        "fromColumn": "scrape_date",
+        "toTable": "dim_Date",
+        "toColumn": "Date"
+      },
+      {
+        "name": "rel_scrapelog_source",
+        "fromTable": "scrape_log",
+        "fromColumn": "source",
+        "toTable": "dim_Source",
+        "toColumn": "SourceKey"
+      }
+    ],
+    "roles": [
+      {
+        "name": "PracaPL_Only",
+        "modelPermission": "read",
+        "tablePermissions": [
+          {
+            "name": "job_offers",
+            "filterExpression": "job_offers[source] = \"pracapl\""
+          }
+        ]
+      },
+      {
+        "name": "IT_Portals",
+        "modelPermission": "read",
+        "tablePermissions": [
+          {
+            "name": "job_offers",
+            "filterExpression": "job_offers[source] IN {\"justjoinit\", \"rocketjobs\"}"
+          }
+        ]
+      },
+      {
+        "name": "All_Data",
+        "modelPermission": "read"
+      }
+    ],
+    "expressions": [
+      {
+        "name": "pDBServer",
+        "kind": "m",
+        "expression": "\"localhost:3306\" meta [IsParameterQuery=true, Type=\"Text\", IsParameterQueryRequired=true]",
+        "lineageTag": "p-db-server"
+      },
+      {
+        "name": "pDBName",
+        "kind": "m",
+        "expression": "\"jobdb\" meta [IsParameterQuery=true, Type=\"Text\", IsParameterQueryRequired=true]",
+        "lineageTag": "p-db-name"
+      },
+      {
+        "name": "pDaysBack",
+        "kind": "m",
+        "expression": "90 meta [IsParameterQuery=true, Type=\"Number\", IsParameterQueryRequired=true]",
+        "lineageTag": "p-days-back"
+      }
+    ],
+    "annotations": [
+      {
+        "name": "PBI_QueryOrder",
+        "value": "[\"job_offers\",\"scrape_log\",\"job_snapshots\",\"daily_stats\"]"
+      },
+      {
+        "name": "__PBI_TimeIntelligenceEnabled",
+        "value": "1"
+      },
+      {
+        "name": "__TEdtr",
+        "value": "1"
+      }
+    ]
+  }
+}

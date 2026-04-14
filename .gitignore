@@ -27,9 +27,7 @@ coverage.xml
 # Ruff
 .ruff_cache/
 
-# Data (local database, debug files & backups)
-data/*.duckdb
-data/*.duckdb.wal
+# Data (debug files & backups)
 data/*.html
 data/backups/
 
@@ -42,3 +40,6 @@ desktop.ini
 .env
 .env.*
 !.env.example
+
+# Recruitment / interview prep
+docs/INTERVIEW_PREP_*.md

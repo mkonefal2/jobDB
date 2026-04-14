@@ -49,7 +49,7 @@ PRIORITIES = {
     "⚪ P4 — Migracja DWH (PostgreSQL + Power BI)": {
         "tasks": [
             ("Schemat star schema PostgreSQL", 0.0),
-            ("Abstrakcja bazy danych (DuckDB ↔ PostgreSQL)", 0.0),
+            ("Abstrakcja bazy danych (MySQL ↔ PostgreSQL)", 0.0),
             ("Skrypt migracji danych", 0.0),
             ("Połączenie Power BI + raporty", 0.0),
         ],

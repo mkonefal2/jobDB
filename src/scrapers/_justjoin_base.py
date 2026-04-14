@@ -98,6 +98,7 @@ class JustJoinBaseScraper(BaseScraper):
             return []
 
         company = item.get("companyName", "").strip() or None
+        company_logo_url = item.get("companyLogoThumbUrl", "").strip() or None
         work_mode = WORKPLACE_MAP.get(item.get("workplaceType", ""), WorkMode.UNKNOWN)
         seniority = EXPERIENCE_MAP.get(item.get("experienceLevel", ""), Seniority.UNKNOWN)
         category = self.category_map.get(item.get("categoryId"))
@@ -130,6 +131,7 @@ class JustJoinBaseScraper(BaseScraper):
                 source_url=source_url,
                 title=title,
                 company_name=company,
+                company_logo_url=company_logo_url,
                 location_raw=loc_city if loc_city else None,
                 location_city=loc_city if loc_city else None,
                 work_mode=work_mode,

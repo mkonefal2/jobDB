@@ -1,7 +1,7 @@
 # Projekt systemu — jobDB
 
 **jobDB** — tracker rynku pracy w stylu SteamDB dla polskich portali z ofertami pracy.
-System scrapuje oferty, normalizuje dane, przechowuje je w DuckDB i prezentuje na dashboardzie Streamlit.
+System scrapuje oferty, normalizuje dane, przechowuje je w MySQL i prezentuje na dashboardzie Streamlit.
 
 **Docelowa architektura:** Migracja do PostgreSQL jako hurtownia danych (star schema) z podłączeniem Power BI.
 
@@ -25,7 +25,7 @@ flowchart TB
 
     subgraph DATA ["Warstwa danych"]
         DB_LAYER["Database Layer<br/>(src/db/)"]
-        DUCK["DuckDB<br/>(data/jobdb.duckdb)"]
+        MYSQL["MySQL<br/>(localhost:3306/jobdb)"]
         PG["PostgreSQL<br/>(docelowo)"]
         PBI["Power BI<br/>(docelowo)"]
     end
@@ -39,10 +39,10 @@ flowchart TB
     SCRAP --> NORM
     NORM -.-> DEDUP
     ORCH --> DB_LAYER
-    DB_LAYER --> DUCK
+    DB_LAYER --> MYSQL
     DB_LAYER -.-> PG
     PG -.-> PBI
-    DASH --> DUCK
+    DASH --> MYSQL
     SCRAP --> PYDANTIC
     NORM --> PYDANTIC
 
@@ -61,7 +61,7 @@ flowchart TB
 |---|---|
 | Scraping | `httpx[http2]`, `selectolax` (HTML parsing), `playwright` (zainstalowany, nieużywany) |
 | Modele danych | `pydantic` v2 (walidacja, computed fields) |
-| Baza danych | `duckdb` (embedded, analityczna) |
+| Baza danych | `mysql-connector-python` (MySQL 8+) |
 | Pipeline | `tenacity` (retry), `rapidfuzz` (fuzzy matching) |
 | Dashboard | `streamlit`, `plotly`, `polars` |
 | CLI / UX | `rich` (formatowanie terminala), `argparse` |
@@ -168,7 +168,7 @@ run_pipeline(sources, max_pages, fetch_details) → None
 
 #### `database.py` — zarządzanie połączeniem
 
-- Singleton connection do pliku DuckDB (`data/jobdb.duckdb`)
+- Singleton connection do MySQL (`localhost:3306/jobdb`)
 - `get_connection()` / `close_connection()`
 
 #### `migrations.py` — DDL
@@ -207,7 +207,7 @@ Enumy: `Source`, `WorkMode`, `Seniority`, `SalaryPeriod`, `ScrapeStatus`
 
 ### 5. Dashboard (`src/dashboard/app.py`)
 
-Framework: **Streamlit** + **Plotly** + **Polars** (read-only na DuckDB)
+Framework: **Streamlit** + **Plotly** + **Polars** (read-only na MySQL)
 
 **Filtry (sidebar):**
 - Multi-select: Źródło, Miasto, Tryb pracy, Seniority
@@ -234,7 +234,13 @@ Wszystkie dane respektują aktywne filtry (dynamiczne WHERE).
 ### 6. Konfiguracja (`config/settings.py`)
 
 ```python
-DB_PATH = "data/jobdb.duckdb"
+MYSQL_CONFIG = {
+    "host": "localhost",
+    "port": 3306,
+    "user": "root",
+    "password": "root",
+    "database": "jobdb",
+}
 EXPORTS_DIR = "data/exports"
 
 DEFAULT_DELAY_SECONDS = 2.0
@@ -351,7 +357,7 @@ flowchart TD
 
     LOOP -->|Koniec| REPORT[Raport podsumowujący]
 
-    REPORT --> DASHBOARD["Dashboard Streamlit<br/>Odczyt z DuckDB<br/>Filtry + wykresy"]
+    REPORT --> DASHBOARD["Dashboard Streamlit<br/>Odczyt z MySQL<br/>Filtry + wykresy"]
 
     style DETAIL diamond
 ```
@@ -369,7 +375,6 @@ jobDB/
 ├── config/
 │   └── settings.py              # Konfiguracja: DB, źródła, delays, User-Agents
 ├── data/
-│   ├── jobdb.duckdb             # Baza danych DuckDB
 │   └── debug_praca.html         # Testowy HTML praca.pl
 ├── docs/
 │   ├── DATABASE_SCHEMA.md       # Schemat bazy danych
@@ -387,7 +392,7 @@ jobDB/
 │   │   └── pages/
 │   │       └── 2_📋_Postep_prac.py  # Zakładka postępu prac
 │   ├── db/
-│   │   ├── database.py          # Singleton DuckDB connection
+│   │   ├── database.py          # Singleton MySQL connection
 │   │   ├── migrations.py        # DDL: CREATE/DROP tabel
 │   │   └── queries.py           # Operacje: upsert, log, snapshot
 │   ├── models/

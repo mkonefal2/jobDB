@@ -11,6 +11,7 @@ SCHEMA_SQLS = [
         source_url        VARCHAR(2048) NOT NULL,
         title             VARCHAR(500) NOT NULL,
         company_name      VARCHAR(500),
+        company_logo_url  VARCHAR(2048),
 
         location_raw      VARCHAR(500),
         location_city     VARCHAR(255),

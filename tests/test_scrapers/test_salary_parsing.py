@@ -98,6 +98,32 @@ class TestParseSalary:
         assert s_min is None
         assert s_max is None
 
+    def test_hourly_decimal_comma(self):
+        """Polish decimal separator (comma) in hourly rates."""
+        text = "35,50 zł brutto/godz."
+        s_min, s_max, cur, per, s_type = _parse_salary(text)
+        assert s_min == 35.50
+        assert s_max == 35.50
+        assert cur == "PLN"
+        assert per == SalaryPeriod.HOUR
+
+    def test_hourly_decimal_comma_range(self):
+        """Range with Polish decimal commas."""
+        text = "17,50 - 22,50 EUR brutto/godz."
+        s_min, s_max, cur, per, s_type = _parse_salary(text)
+        assert s_min == 17.50
+        assert s_max == 22.50
+        assert cur == "EUR"
+        assert per == SalaryPeriod.HOUR
+
+    def test_hourly_decimal_comma_small(self):
+        """Avoid min > max with decimal comma rates."""
+        text = "30,50 zł brutto/godz."
+        s_min, s_max, cur, per, s_type = _parse_salary(text)
+        assert s_min == 30.50
+        assert s_max == 30.50
+        assert s_min <= s_max
+
     def test_nbsp_handling(self):
         text = "5\xa0100\xa0zł brutto/mies."
         s_min, s_max, cur, per, s_type = _parse_salary(text)

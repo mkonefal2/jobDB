@@ -232,7 +232,8 @@ st.subheader("🏢 Top pracodawcy")
 top_companies = query(f"""
     SELECT company_name as firma, count(*) as oferty,
            count(DISTINCT location_city) as miasta,
-           (SELECT wm.work_mode FROM job_offers wm WHERE wm.company_name = job_offers.company_name GROUP BY wm.work_mode ORDER BY count(*) DESC LIMIT 1) as tryb
+           (SELECT wm.work_mode FROM job_offers wm WHERE wm.company_name = job_offers.company_name GROUP BY wm.work_mode ORDER BY count(*) DESC LIMIT 1) as tryb,
+           (SELECT wm2.company_logo_url FROM job_offers wm2 WHERE wm2.company_name = job_offers.company_name AND wm2.company_logo_url IS NOT NULL LIMIT 1) as logo
     FROM job_offers
     WHERE {WHERE} AND company_name IS NOT NULL
     GROUP BY 1 ORDER BY 2 DESC LIMIT 20
@@ -240,10 +241,13 @@ top_companies = query(f"""
 if top_companies.height > 0:
     st.dataframe(
         top_companies.to_pandas().rename(
-            columns={"firma": "Firma", "oferty": "Oferty", "miasta": "Miasta", "tryb": "Dominujący tryb"}
+            columns={"firma": "Firma", "oferty": "Oferty", "miasta": "Miasta", "tryb": "Dominujący tryb", "logo": "Logo"}
         ),
         width="stretch",
         hide_index=True,
+        column_config={
+            "Logo": st.column_config.ImageColumn("Logo", width="small"),
+        },
     )
 
 # ── Tabela ofert ──────────────────────────────────────────────────────────────
@@ -255,7 +259,7 @@ search_safe = search.replace("'", "''").replace("%", "\\%").replace("_", "\\_") 
 search_clause = f"AND LOWER(title) LIKE LOWER('%{search_safe}%')" if search else ""
 
 offers_df = query(f"""
-    SELECT title as tytul, company_name as firma, location_city as miasto,
+    SELECT company_logo_url as logo, title as tytul, company_name as firma, location_city as miasto,
            work_mode as tryb, seniority as poziom, employment_type as umowa,
            CASE WHEN salary_min IS NOT NULL
                 THEN CONCAT(salary_min, ' - ', salary_max, ' ', COALESCE(salary_currency, ''))
@@ -273,6 +277,7 @@ if offers_df.height > 0:
         width="stretch",
         hide_index=True,
         column_config={
+            "logo": st.column_config.ImageColumn("Logo", width="small"),
             "link": st.column_config.LinkColumn("Link", display_text="Otwórz"),
             "tytul": st.column_config.TextColumn("Tytuł", width="large"),
             "firma": st.column_config.TextColumn("Firma", width="medium"),
