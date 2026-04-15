@@ -12,6 +12,7 @@ class Source(str, Enum):
     JUSTJOINIT = "justjoinit"
     ROCKETJOBS = "rocketjobs"
     PRACUJ = "pracuj"
+    NOFLUFFJOBS = "nofluffjobs"
     JOOBLE = "jooble"
 
 

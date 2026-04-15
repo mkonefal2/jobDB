@@ -52,6 +52,11 @@ SOURCES = {
         "base_url": "https://www.pracuj.pl",
         "delay": 3.0,
     },
+    "nofluffjobs": {
+        "name": "nofluffjobs.com",
+        "base_url": "https://nofluffjobs.com",
+        "delay": 1.0,
+    },
     # "jooble" disabled — aggregator that duplicates offers from other sources
     # "jooble": {
     #     "name": "jooble.org",

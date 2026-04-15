@@ -19,6 +19,7 @@ from src.pipeline.deduplicator import are_duplicates, compute_dedup_key, dedupli
 from src.pipeline.normalizer import normalize_offers
 from src.scrapers.base import BaseScraper
 from src.scrapers.justjoinit import JustJoinITScraper
+from src.scrapers.nofluffjobs import NoFluffJobsScraper
 from src.scrapers.pracapl import PracaPLScraper
 from src.scrapers.pracujpl import PracujPLScraper
 from src.scrapers.rocketjobs import RocketJobsScraper
@@ -30,6 +31,7 @@ SCRAPER_REGISTRY: dict[Source, type[BaseScraper]] = {
     Source.PRACUJ: PracujPLScraper,
     Source.JUSTJOINIT: JustJoinITScraper,
     Source.ROCKETJOBS: RocketJobsScraper,
+    Source.NOFLUFFJOBS: NoFluffJobsScraper,
     # Jooble disabled — aggregator that duplicates offers from primary sources
 }
 
