@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jobDB — Rynek Pracy Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<!-- ================================================================== -->
+<!-- SIDEBAR NAVIGATION                                                  -->
+<!-- ================================================================== -->
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+        <span>jobDB</span>
+    </div>
+    <ul class="sidebar-nav">
+        <li class="nav-item active" data-page="executive">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+            <span>Przegląd</span>
+        </li>
+        <li class="nav-item" data-page="salary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+            <span>Wynagrodzenia</span>
+        </li>
+        <li class="nav-item" data-page="geography">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+            <span>Geografia</span>
+        </li>
+        <li class="nav-item" data-page="employers">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <span>Pracodawcy</span>
+        </li>
+        <li class="nav-item" data-page="trends">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <span>Trendy</span>
+        </li>
+        <li class="nav-item" data-page="quality">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Jakość danych</span>
+        </li>
+    </ul>
+    <div class="sidebar-footer">
+        <button class="filter-toggle" id="filterToggle">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            <span>Filtry</span>
+        </button>
+    </div>
+</nav>
+
+<!-- ================================================================== -->
+<!-- FILTER PANEL (Slide-out)                                            -->
+<!-- ================================================================== -->
+<aside class="filter-panel" id="filterPanel">
+    <div class="filter-header">
+        <h3>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            Filtry globalne
+        </h3>
+        <button class="filter-close" id="filterClose">&times;</button>
+    </div>
+    <div class="filter-body">
+        <div class="filter-group">
+            <label>Źródło</label>
+            <div id="filterSource" class="checkbox-group"></div>
+        </div>
+        <div class="filter-group">
+            <label>Miasto</label>
+            <select id="filterCity" multiple class="filter-select"></select>
+        </div>
+        <div class="filter-group">
+            <label>Tryb pracy</label>
+            <div id="filterWorkMode" class="checkbox-group"></div>
+        </div>
+        <div class="filter-group">
+            <label>Seniority</label>
+            <div id="filterSeniority" class="checkbox-group"></div>
+        </div>
+        <div class="filter-group">
+            <label>Tylko aktywne</label>
+            <label class="toggle-switch">
+                <input type="checkbox" id="filterActiveOnly">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <button class="btn btn-primary" id="applyFilters">Zastosuj filtry</button>
+        <button class="btn btn-ghost" id="clearFilters">Wyczyść</button>
+    </div>
+</aside>
+
+<!-- ================================================================== -->
+<!-- MAIN CONTENT                                                        -->
+<!-- ================================================================== -->
+<main class="main-content" id="mainContent">
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Ładowanie danych...</p>
+    </div>
+
+    <!-- ==================== PAGE: Executive Dashboard ==================== -->
+    <section class="page" id="page-executive">
+        <div class="page-header">
+            <h1>📊 Przegląd rynku pracy</h1>
+            <div class="page-subtitle" id="lastScrapeInfo"></div>
+        </div>
+
+        <div class="kpi-row" id="executiveKpis"></div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">Oferty wg źródła</div>
+                <div class="chart-container chart-sm"><canvas id="chartSourceDonut"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header">Tryb pracy</div>
+                <div class="chart-container chart-sm"><canvas id="chartWorkModeDonut"></canvas></div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">Top 15 miast</div>
+                <div class="chart-container chart-md"><canvas id="chartTopCities"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header">Poziom doświadczenia</div>
+                <div class="chart-container chart-sm"><canvas id="chartSeniority"></canvas></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Oferty wg źródła — szczegóły</div>
+            <div class="table-wrapper" id="sourceTable"></div>
+        </div>
+    </section>
+
+    <!-- ==================== PAGE: Salary Intelligence ==================== -->
+    <section class="page hidden" id="page-salary">
+        <div class="page-header">
+            <h1>💰 Analiza wynagrodzeń</h1>
+        </div>
+
+        <div class="kpi-row" id="salaryKpis"></div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">Wynagrodzenie wg seniority (percentyle)</div>
+                <div class="chart-container chart-md"><canvas id="chartSalaryBySeniority"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header">Wynagrodzenie wg miasta (Top 10)</div>
+                <div class="chart-container chart-md"><canvas id="chartSalaryByCity"></canvas></div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">Wynagrodzenie wg trybu pracy</div>
+                <div class="chart-container chart-sm"><canvas id="chartSalaryByWorkMode"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header">Rozkład przedziałów wynagrodzenia</div>
+                <div class="chart-container chart-sm"><canvas id="chartSalaryBands"></canvas></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Heatmapa wynagrodzeń — Miasto × Seniority</div>
+            <div class="table-wrapper" id="salaryHeatmap"></div>
+        </div>
+    </section>
+
+    <!-- ==================== PAGE: Geographic Market ==================== -->
+    <section class="page hidden" id="page-geography">
+        <div class="page-header">
+            <h1>🗺️ Rynek geograficzny</h1>
+        </div>
+
+        <div class="kpi-row" id="geoKpis"></div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">Top 20 miast</div>
+                <div class="chart-container chart-md"><canvas id="chartGeoCities"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header">Oferty wg województwa</div>
+                <div class="chart-container chart-md"><canvas id="chartGeoRegions"></canvas></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Tryb pracy wg miasta</div>
+            <div class="chart-container chart-md"><canvas id="chartWorkModeByCity"></canvas></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Szczegóły miast</div>
+            <div class="table-wrapper" id="cityTable"></div>
+        </div>
+    </section>
+
+    <!-- ==================== PAGE: Employer Analytics ==================== -->
+    <section class="page hidden" id="page-employers">
+        <div class="page-header">
+            <h1>🏢 Analiza pracodawców</h1>
+        </div>
+
+        <div class="kpi-row" id="employerKpis"></div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">Top 20 — liczba ofert</div>
+                <div class="chart-container chart-md"><canvas id="chartEmployersByOffers"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header">Top 20 — średnie wynagrodzenie</div>
+                <div class="chart-container chart-md"><canvas id="chartEmployersBySalary"></canvas></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Top pracodawcy — tabela</div>
+            <div class="table-wrapper" id="employerTable"></div>
+        </div>
+    </section>
+
+    <!-- ==================== PAGE: Trends & Dynamics ==================== -->
+    <section class="page hidden" id="page-trends">
+        <div class="page-header">
+            <h1>📈 Trendy i dynamika rynku</h1>
+        </div>
+
+        <div class="kpi-row" id="trendKpis"></div>
+
+        <div class="card">
+            <div class="card-header">Dzienny napływ ofert (90 dni)</div>
+            <div class="chart-container chart-lg"><canvas id="chartDailyTrend"></canvas></div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">Sezonowość — dzień tygodnia</div>
+                <div class="chart-container chart-sm"><canvas id="chartSeasonality"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header">Churn ofert</div>
+                <div class="chart-container chart-sm"><canvas id="chartChurn"></canvas></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== PAGE: Data Quality & Pipeline ==================== -->
+    <section class="page hidden" id="page-quality">
+        <div class="page-header">
+            <h1>🔧 Jakość danych i pipeline</h1>
+        </div>
+
+        <div class="kpi-row" id="qualityKpis"></div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">Kompletność danych wg pola</div>
+                <div class="chart-container chart-sm"><canvas id="chartCompleteness"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-header">Jakość danych wg źródła</div>
+                <div class="chart-container chart-sm"><canvas id="chartQualityBySource"></canvas></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Log scrapowania</div>
+            <div class="table-wrapper" id="scrapeLogTable"></div>
+        </div>
+    </section>
+
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
