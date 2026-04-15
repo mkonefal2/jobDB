@@ -100,7 +100,22 @@ def normalize_offer(offer: JobOffer) -> JobOffer:
     if offer.salary_min and offer.salary_max and offer.salary_min > offer.salary_max:
         offer.salary_min, offer.salary_max = offer.salary_max, offer.salary_min
 
+    # Fix misclassified salary_period (hourly ↔ monthly confusion)
+    if offer.salary_min and offer.salary_period:
+        offer.salary_period = _fix_salary_period(
+            offer.salary_min, offer.salary_max, offer.salary_period, offer.salary_currency
+        )
+
     # Reject outlier salaries (likely parsing errors)
+    if offer.salary_min and offer.salary_max:
+        ratio = offer.salary_max / offer.salary_min if offer.salary_min > 0 else 0
+        if ratio > 10:
+            offer.salary_min = None
+            offer.salary_max = None
+            offer.salary_currency = None
+            offer.salary_period = None
+            offer.salary_type = None
+
     if offer.salary_max:
         period = offer.salary_period or SalaryPeriod.MONTH
         upper_bounds = {
@@ -116,7 +131,101 @@ def normalize_offer(offer: JobOffer) -> JobOffer:
             offer.salary_period = None
             offer.salary_type = None
 
+    # Normalize employment_type
+    if offer.employment_type:
+        offer.employment_type = normalize_employment_type(offer.employment_type)
+
     return offer
+
+
+# -- salary period heuristic -----------------------------------------------
+
+# Thresholds for PLN; other currencies are converted with approximate multipliers
+_CURRENCY_TO_PLN = {"PLN": 1.0, "EUR": 4.3, "USD": 4.0, "GBP": 5.0, "CHF": 4.5}
+
+
+def _fix_salary_period(
+    salary_min: float,
+    salary_max: float | None,
+    period: SalaryPeriod,
+    currency: str | None,
+) -> SalaryPeriod:
+    """Detect and fix misclassified salary_period.
+
+    Common scraper errors:
+    - hourly rate (e.g. 30 PLN/h) stored as monthly
+    - monthly rate (e.g. 25 000 PLN/month) stored as hourly
+    """
+    ref = salary_max or salary_min
+    multiplier = _CURRENCY_TO_PLN.get(currency or "PLN", 1.0)
+    ref_pln = ref * multiplier
+
+    if period == SalaryPeriod.MONTH and ref_pln < 300:
+        # Values like 30-150 PLN/month are obviously hourly rates
+        return SalaryPeriod.HOUR
+    if period == SalaryPeriod.HOUR and ref_pln > 1_000:
+        # Values like 26000 PLN/hour are obviously monthly
+        return SalaryPeriod.MONTH
+
+    return period
+
+
+# -- employment type normalization -----------------------------------------
+
+_EMPLOYMENT_CANONICAL = {
+    "uop": "UoP",
+    "umowa o pracę": "UoP",
+    "umowa o prace": "UoP",
+    "uop tymczasowa": "UoP tymczasowa",
+    "umowa o pracę tymczasowa": "UoP tymczasowa",
+    "uop zastępstwo": "UoP zastępstwo",
+    "umowa na zastępstwo": "UoP zastępstwo",
+    "b2b": "B2B",
+    "kontrakt b2b": "B2B",
+    "uz": "UZ",
+    "umowa zlecenie": "UZ",
+    "umowa zleceni": "UZ",
+    "uod": "UoD",
+    "umowa o dzieło": "UoD",
+    "umowa o dzielo": "UoD",
+    "staż": "staż",
+    "staz": "staż",
+    "umowa o staż": "staż",
+    "dowolna": "dowolna",
+    "agencyjna": "agencyjna",
+    "umowa agencyjna": "agencyjna",
+}
+
+# Canonical order for consistent output
+_EMPLOYMENT_ORDER = {
+    "UoP": 0,
+    "UoP tymczasowa": 1,
+    "UoP zastępstwo": 2,
+    "B2B": 3,
+    "UZ": 4,
+    "UoD": 5,
+    "agencyjna": 6,
+    "staż": 7,
+    "dowolna": 8,
+}
+
+
+def normalize_employment_type(raw: str) -> str:
+    """Normalize employment_type to canonical abbreviations with ' / ' separator."""
+    # Split on common separators: ' / ', ', ', ' | '
+    parts = re.split(r"\s*/\s*|\s*,\s*|\s*\|\s*", raw.strip())
+
+    canonical: list[str] = []
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+        mapped = _EMPLOYMENT_CANONICAL.get(part.lower(), part)
+        if mapped not in canonical:
+            canonical.append(mapped)
+
+    canonical.sort(key=lambda x: _EMPLOYMENT_ORDER.get(x, 99))
+    return " / ".join(canonical) if canonical else raw
 
 
 def normalize_offers(offers: list[JobOffer]) -> list[JobOffer]:
