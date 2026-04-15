@@ -235,7 +235,7 @@ top_companies = query(f"""
            (SELECT wm.work_mode FROM job_offers wm WHERE wm.company_name = job_offers.company_name GROUP BY wm.work_mode ORDER BY count(*) DESC LIMIT 1) as tryb,
            (SELECT wm2.company_logo_url FROM job_offers wm2 WHERE wm2.company_name = job_offers.company_name AND wm2.company_logo_url IS NOT NULL LIMIT 1) as logo
     FROM job_offers
-    WHERE {WHERE} AND company_name IS NOT NULL
+    WHERE {WHERE} AND company_name IS NOT NULL AND company_name NOT LIKE 'Klient portalu%'
     GROUP BY 1 ORDER BY 2 DESC LIMIT 20
 """)
 if top_companies.height > 0:

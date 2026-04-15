@@ -980,7 +980,7 @@ def get_employers(
         seniority=seniority, date_from=date_from, date_to=date_to,
         active_only=active_only,
     )
-    extra = f"{'AND' if w else 'WHERE'} company_name IS NOT NULL AND company_name != ''"
+    extra = f"{'AND' if w else 'WHERE'} company_name IS NOT NULL AND company_name != '' AND company_name NOT LIKE 'Klient portalu%%'"
 
     # Summary KPIs
     summary = _query_one(

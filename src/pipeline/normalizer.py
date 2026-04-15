@@ -84,6 +84,9 @@ def normalize_offer(offer: JobOffer) -> JobOffer:
     # Clean company name
     if offer.company_name:
         offer.company_name = re.sub(r"\s+", " ", offer.company_name).strip()
+        # Nullify anonymous/placeholder company names (e.g. praca.pl anonymous employers)
+        if re.match(r"^Klient portalu", offer.company_name, re.IGNORECASE):
+            offer.company_name = None
 
     # Default currency to PLN
     if offer.salary_min and not offer.salary_currency:
