@@ -62,10 +62,10 @@ def _where(
         clauses.append(f"{prefix}seniority IN ({','.join(['%s'] * len(seniority))})")
         params.extend(seniority)
     if date_from:
-        clauses.append(f"{prefix}scraped_at >= %s")
+        clauses.append(f"{prefix}first_seen_at >= %s")
         params.append(datetime.combine(date_from, datetime.min.time()))
     if date_to:
-        clauses.append(f"{prefix}scraped_at <= %s")
+        clauses.append(f"{prefix}first_seen_at <= %s")
         params.append(datetime.combine(date_to, datetime.max.time()))
     where = " WHERE " + " AND ".join(clauses) if clauses else ""
     return where, params
@@ -604,24 +604,24 @@ def get_trends(
 
     extra_and = "AND" if w else "WHERE"
     new_today = _query_one(
-        f"SELECT COUNT(*) AS cnt FROM job_offers {w} {extra_and} DATE(scraped_at) = %s",
+        f"SELECT COUNT(*) AS cnt FROM job_offers {w} {extra_and} DATE(first_seen_at) = %s",
         p + [today_str],
     ).get("cnt", 0)
 
     new_week = _query_one(
-        f"SELECT COUNT(*) AS cnt FROM job_offers {w} {extra_and} DATE(scraped_at) >= %s",
+        f"SELECT COUNT(*) AS cnt FROM job_offers {w} {extra_and} DATE(first_seen_at) >= %s",
         p + [week_ago],
     ).get("cnt", 0)
 
     # Current month offers
     current_month = _query_one(
-        f"SELECT COUNT(*) AS cnt FROM job_offers {w} {extra_and} scraped_at >= %s",
+        f"SELECT COUNT(*) AS cnt FROM job_offers {w} {extra_and} first_seen_at >= %s",
         p + [datetime.combine(current_month_start, datetime.min.time())],
     ).get("cnt", 0)
 
     # Previous month offers
     prev_month = _query_one(
-        f"SELECT COUNT(*) AS cnt FROM job_offers {w} {extra_and} scraped_at >= %s AND scraped_at <= %s",
+        f"SELECT COUNT(*) AS cnt FROM job_offers {w} {extra_and} first_seen_at >= %s AND first_seen_at <= %s",
         p + [
             datetime.combine(month_ago_start, datetime.min.time()),
             datetime.combine(month_ago_end, datetime.max.time()),
@@ -648,10 +648,10 @@ def get_trends(
     ninety_days_ago = date.today() - timedelta(days=90)
     daily = _query(
         f"""
-        SELECT DATE(scraped_at) AS day, COUNT(*) AS cnt
+        SELECT DATE(first_seen_at) AS day, COUNT(*) AS cnt
         FROM job_offers
-        {w} {extra_and} scraped_at >= %s
-        GROUP BY DATE(scraped_at)
+        {w} {extra_and} first_seen_at >= %s
+        GROUP BY DATE(first_seen_at)
         ORDER BY day
         """,
         p + [datetime.combine(ninety_days_ago, datetime.min.time())],
@@ -660,29 +660,28 @@ def get_trends(
         {"date": str(r["day"]), "count": r["cnt"]} for r in daily
     ]
 
-    # Offer velocity
-    if daily_series and len(daily_series) >= 2:
-        d0 = datetime.fromisoformat(daily_series[0]["date"])
-        d1 = datetime.fromisoformat(daily_series[-1]["date"])
-        period_days = max((d1 - d0).days, 1)
-        velocity = round(total_all / period_days, 1)
-    else:
-        velocity = 0
+    # Offer velocity — average new offers per day (last 30 days)
+    thirty_days_ago = date.today() - timedelta(days=30)
+    vel_row = _query_one(
+        f"SELECT COUNT(*) AS cnt FROM job_offers {w} {extra_and} first_seen_at >= %s",
+        p + [datetime.combine(thirty_days_ago, datetime.min.time())],
+    )
+    velocity = round((vel_row.get("cnt", 0) or 0) / 30, 1)
 
     # YTD
     ytd_start = date(date.today().year, 1, 1)
     ytd = _query_one(
-        f"SELECT COUNT(*) AS cnt FROM job_offers {w} {extra_and} scraped_at >= %s",
+        f"SELECT COUNT(*) AS cnt FROM job_offers {w} {extra_and} first_seen_at >= %s",
         p + [datetime.combine(ytd_start, datetime.min.time())],
     ).get("cnt", 0)
 
     # Day-of-week seasonality
     seasonality = _query(
         f"""
-        SELECT DAYOFWEEK(scraped_at) AS dow, COUNT(*) AS cnt
+        SELECT DAYOFWEEK(first_seen_at) AS dow, COUNT(*) AS cnt
         FROM job_offers
-        {w} {extra_and} scraped_at >= %s
-        GROUP BY DAYOFWEEK(scraped_at)
+        {w} {extra_and} first_seen_at >= %s
+        GROUP BY DAYOFWEEK(first_seen_at)
         ORDER BY dow
         """,
         p + [datetime.combine(ninety_days_ago, datetime.min.time())],
