@@ -1,6 +1,6 @@
 # Schemat bazy danych — jobDB
 
-Baza danych: **MySQL** (`localhost:3306/jobdb`)
+Baza danych: **MySQL** (konfiguracja przez zmienne środowiskowe, domyślnie `localhost:3306/jobdb`)
 
 ---
 

@@ -3,7 +3,7 @@
 **jobDB** — tracker rynku pracy w stylu SteamDB dla polskich portali z ofertami pracy.
 System scrapuje oferty, normalizuje dane, przechowuje je w MySQL i prezentuje w dashboardzie HTML/FastAPI oraz Power BI.
 
-**Docelowa architektura:** Migracja do PostgreSQL jako hurtownia danych (star schema) z podłączeniem Power BI.
+**Deploy:** Railway (Docker + FastAPI + uvicorn)
 
 ---
 
@@ -13,6 +13,7 @@ System scrapuje oferty, normalizuje dane, przechowuje je w MySQL i prezentuje w 
 flowchart TB
     subgraph UI ["Warstwa prezentacji"]
         DASH["HTML Dashboard + FastAPI<br/>(src/dashboard/html/)"]
+        PBI["Power BI<br/>(powerbi/model.bim)"]
         CLI["Skrypty CLI<br/>(scripts/)"]
     end
 
@@ -25,9 +26,7 @@ flowchart TB
 
     subgraph DATA ["Warstwa danych"]
         DB_LAYER["Database Layer<br/>(src/db/)"]
-        MYSQL["MySQL<br/>(localhost:3306/jobdb)"]
-        PG["PostgreSQL<br/>(docelowo)"]
-        PBI["Power BI<br/>(docelowo)"]
+        MYSQL["MySQL<br/>(Railway / localhost)"]
     end
 
     subgraph MODELS ["Modele"]
@@ -37,21 +36,14 @@ flowchart TB
     CLI --> ORCH
     ORCH --> SCRAP
     SCRAP --> NORM
-    NORM -.-> DEDUP
+    NORM --> DEDUP
     ORCH --> DB_LAYER
     DB_LAYER --> MYSQL
-    DB_LAYER -.-> PG
-    PG -.-> PBI
     DASH --> MYSQL
+    PBI --> MYSQL
     SCRAP --> PYDANTIC
     NORM --> PYDANTIC
-
-    style DEDUP stroke-dasharray: 5 5
-    style PG stroke-dasharray: 5 5
-    style PBI stroke-dasharray: 5 5
 ```
-
-> Linia przerywana przy Deduplicator = moduł zaimplementowany, ale niezintegrowany z pipeline.
 
 ---
 
@@ -59,15 +51,18 @@ flowchart TB
 
 | Warstwa | Technologie |
 |---|---|
-| Scraping | `httpx[http2]`, `selectolax` (HTML parsing), `playwright` (zainstalowany, nieużywany) |
+| Scraping | `httpx[http2]`, `selectolax` (HTML parsing), `playwright` (pracuj.pl, jooble) |
 | Modele danych | `pydantic` v2 (walidacja, computed fields) |
-| Baza danych | `mysql-connector-python` (MySQL 8+) |
-| Pipeline | `tenacity` (retry), `rapidfuzz` (fuzzy matching) |
-| Dashboard | `fastapi`, `uvicorn` |
+| Baza danych | `mysql-connector-python` (MySQL 8+), env vars |
+| Pipeline | `tenacity` (retry), `rapidfuzz` (fuzzy matching, deduplikacja) |
+| Dashboard | `fastapi`, `uvicorn`, Chart.js (frontend) |
+| BI | Power BI (model.bim, DAX measures) |
 | CLI / UX | `rich` (formatowanie terminala), `argparse` |
-| Scheduler | `schedule` (zainstalowany, nieużywany) |
+| Scheduler | `schedule` + Windows Task Scheduler (`scripts/schedule_scraper.py`) |
+| Logging | Python `logging` — plik + konsola, rotacja 30 plików (`data/logs/`) |
 | Testy | `pytest`, `pytest-asyncio` |
 | Linter | `ruff` (reguły E/F/I/N/W, max 120 znaków) |
+| Deploy | Docker + Railway |
 
 ---
 
@@ -90,7 +85,7 @@ Bazowa klasa dla wszystkich scraperów z wbudowaną odpornością na błędy:
 
 #### `pracapl.py` — PracaPLScraper (praca.pl)
 
-Jedyny w pełni zaimplementowany scraper:
+Scraper HTML-owy:
 
 **Parsowanie listingu:**
 1. Selektor CSS: `ul.listing:not(.listing--week-offer) li.listing__item`
@@ -117,8 +112,40 @@ Jedyny w pełni zaimplementowany scraper:
 
 **Rejestr scraperów:**
 ```python
-SCRAPER_REGISTRY = {Source.PRACAPL: PracaPLScraper}
+SCRAPER_REGISTRY = {
+    Source.PRACAPL: PracaPLScraper,
+    Source.PRACUJ: PracujPLScraper,
+    Source.JUSTJOINIT: JustJoinITScraper,
+    Source.ROCKETJOBS: RocketJobsScraper,
+    Source.NOFLUFFJOBS: NoFluffJobsScraper,
+    # Jooble disabled — aggregator that duplicates offers from primary sources
+}
 ```
+
+#### `pracujpl.py` — PracujPLScraper (pracuj.pl)
+
+Scraper oparty na Playwright (Next.js, blokuje plain HTTP):
+- Renderowanie stron JS w headless browser
+- Detekcja duplikatów stron i filtrowanie ofert testowych
+
+#### `justjoinit.py` — JustJoinITScraper (justjoin.it)
+
+Scraper API-owy (dziedziczy z `_justjoin_base.py`):
+- Pobiera oferty przez REST API justjoin.it
+
+#### `rocketjobs.py` — RocketJobsScraper (rocketjobs.pl)
+
+Scraper API-owy (dziedziczy z `_justjoin_base.py`):
+- Wspólna baza z justjoin.it (ten sam backend API)
+
+#### `nofluffjobs.py` — NoFluffJobsScraper (nofluffjobs.com)
+
+Scraper API-owy:
+- Pobiera wszystkie oferty w jednym requeście
+
+#### `jooble.py` — JoobleScraper (jooble.org) — WYŁĄCZONY
+
+Scraper Playwright-owy — celowo wyłączony z SCRAPER_REGISTRY (agregator duplikujący oferty z innych źródeł).
 
 ---
 
@@ -127,7 +154,7 @@ SCRAPER_REGISTRY = {Source.PRACAPL: PracaPLScraper}
 #### `orchestrator.py` — główny przepływ
 
 ```
-run_pipeline(sources, max_pages, fetch_details) → None
+run_pipeline(sources, max_pages, fetch_details) → dict[Source, ScrapeLogEntry]
 ```
 
 **Kroki:**
@@ -137,8 +164,11 @@ run_pipeline(sources, max_pages, fetch_details) → None
    - (Opcjonalnie) Fetch detail pages z rate limitingiem
    - Normalizacja → `normalize_offers(offers)`
    - Zapis → `upsert_offers(offers)` (INSERT nowych / UPDATE istniejących)
+   - Oznaczenie nieaktywnych → `mark_inactive(source, active_ids)`
    - Log → `insert_scrape_log(entry)`
-3. Wydruk raportu podsumowującego
+3. Globalna deduplikacja cross-source (`_run_global_dedup()`) jeśli ≥2 źródła
+4. Tworzenie daily snapshot (`create_daily_snapshot()`)
+5. Wydruk raportu podsumowującego
 
 **Run ID:** UUID (pierwsze 12 znaków) wiążące powiązane uruchomienia.
 
@@ -159,8 +189,7 @@ run_pipeline(sources, max_pages, fetch_details) → None
   - Identyczne miasto
   - Podobieństwo tytułu (token-sort) ≥ 85%
 - **Klasteryzacja**: Przypisanie `dedup_cluster_id` do dopasowanych ofert
-
-> ⚠️ **Status: Zaimplementowany, ale NIE zintegrowany z pipeline.**
+- **Integracja**: Wywoływany w pipeline po upsert — globalna deduplikacja cross-source
 
 ---
 
@@ -168,7 +197,8 @@ run_pipeline(sources, max_pages, fetch_details) → None
 
 #### `database.py` — zarządzanie połączeniem
 
-- Singleton connection do MySQL (`localhost:3306/jobdb`)
+- Singleton connection do MySQL (konfigurowalne przez env vars)
+- Automatyczne tworzenie bazy jeśli nie istnieje (UTF-8, `utf8mb4_unicode_ci`)
 - `get_connection()` / `close_connection()`
 
 #### `migrations.py` — DDL
@@ -232,28 +262,34 @@ Wszystkie dane respektują aktywne filtry (dynamiczne WHERE).
 
 ```python
 MYSQL_CONFIG = {
-    "host": "localhost",
-    "port": 3306,
-    "user": "root",
-    "password": "root",
-    "database": "jobdb",
+    "host": os.getenv("MYSQL_HOST", "localhost"),
+    "port": int(os.getenv("MYSQL_PORT", "3306")),
+    "user": os.getenv("MYSQL_USER", "root"),
+    "password": os.getenv("MYSQL_PASSWORD", "root"),
+    "database": os.getenv("MYSQL_DATABASE", "jobdb"),
 }
-EXPORTS_DIR = "data/exports"
+EXPORTS_DIR = DATA_DIR / "exports"
 
 DEFAULT_DELAY_SECONDS = 2.0
 MAX_RETRIES = 3
 REQUEST_TIMEOUT = 30
+
+# Playwright settings
+PLAYWRIGHT_GOTO_TIMEOUT = 60_000      # ms
+PLAYWRIGHT_SELECTOR_TIMEOUT = 15_000  # ms
+PLAYWRIGHT_MAX_RETRIES = 3
 ```
 
-**Zdefiniowane źródła (5):**
+**Zdefiniowane źródła (5 aktywnych + 1 wyłączone):**
 
-| Klucz | Portal | Base URL | Delay |
-|---|---|---|---|
-| `pracapl` | praca.pl | `https://www.praca.pl` | 2.0s |
-| `justjoinit` | justjoin.it | `https://justjoin.it` | 1.5s |
-| `rocketjobs` | rocketjobs.pl | `https://rocketjobs.pl` | 1.5s |
-| `pracuj` | pracuj.pl | `https://www.pracuj.pl` | 3.0s |
-| `jooble` | jooble.org | `https://pl.jooble.org` | 2.5s |
+| Klucz | Portal | Base URL | Delay | Typ |
+|---|---|---|---|---|
+| `pracapl` | praca.pl | `https://www.praca.pl` | 2.0s | HTML |
+| `justjoinit` | justjoin.it | `https://justjoin.it` | 1.5s | API |
+| `rocketjobs` | rocketjobs.pl | `https://rocketjobs.pl` | 1.5s | API |
+| `pracuj` | pracuj.pl | `https://www.pracuj.pl` | 3.0s | Playwright |
+| `nofluffjobs` | nofluffjobs.com | `https://nofluffjobs.com` | 1.0s | API |
+| ~~`jooble`~~ | ~~jooble.org~~ | ~~`https://pl.jooble.org`~~ | ~~2.5s~~ | ~~wyłączony~~ |
 
 ---
 
@@ -262,9 +298,16 @@ REQUEST_TIMEOUT = 30
 | Skrypt | Entry Point | Opis |
 |---|---|---|
 | `run_scraper.py` | `jobdb-scrape` | Główny CLI — `-s` źródła, `-p` max stron, `-d` detale |
+| `schedule_scraper.py` | — | Scheduler: Windows Task Scheduler (`--schedule`, `--unschedule`, `--status`) |
+| `backup_db.py` | — | Backup mysqldump (auto/schedule, ostatnie 10) |
 | `check_scraped_data.py` | — | Podsumowanie danych: counts, dystrybucje, statystyki salary |
+| `verify_credibility.py` | — | Weryfikacja jakości danych vs live site |
+| `compare_offers.py` | — | Ręczna weryfikacja ofert po ID |
 | `verify_data.py` | — | Szybka weryfikacja kompletności danych |
+| `verify_pracuj.py` | — | Weryfikacja danych pracuj.pl |
 | `debug_html.py` | — | Inspekcja HTML — klasy CSS, struktury ofert |
+| `debug_salary.py` | — | Debugowanie selektorów salary |
+| `test_fixes.py` | — | Szybkie testy PracaPLScraper |
 
 ---
 
@@ -298,37 +341,6 @@ SPA (Single Page Application) z REST API:
 
 ---
 
-## Docelowa architektura hurtowni danych
-
-```mermaid
-flowchart LR
-    subgraph ETL ["Pipeline ETL"]
-        SCRAP["Scrapers<br/>(5 portali)"]
-        NORM["Normalizer"]
-        DEDUP["Deduplicator"]
-    end
-
-    subgraph DWH ["Hurtownia danych (PostgreSQL)"]
-        FACT["fact_job_offers<br/>fact_daily_snapshots"]
-        DIM["dim_company<br/>dim_location<br/>dim_source<br/>dim_seniority"]
-        AGG["fact_daily_stats<br/>(materialized views)"]
-    end
-
-    subgraph BI ["Business Intelligence"]
-        PBI["Power BI<br/>(DirectQuery)"]
-        DASH["HTML Dashboard<br/>(monitoring)"]
-    end
-
-    SCRAP --> NORM --> DEDUP --> FACT
-    DIM --- FACT
-    FACT --> AGG
-    FACT --> PBI
-    AGG --> PBI
-    FACT --> DASH
-```
-
-**Star schema** — tabela faktów `fact_job_offers` połączona z wymiarami (company, location, source, seniority, work_mode). Partycjonowanie po `scraped_at` (monthly). Indeksy GIN na `technologies`, B-tree na klucze filtrów.
-
 ---
 
 ## Przepływ danych end-to-end
@@ -348,10 +360,14 @@ flowchart TD
 
     NORM --> UPSERT["upsert_offers()<br/>INSERT nowych<br/>UPDATE istniejących"]
 
-    UPSERT --> LOG["insert_scrape_log()"]
+    UPSERT --> INACTIVE["mark_inactive()<br/>Niewidoczne oferty → is_active=false"]
+
+    INACTIVE --> LOG["insert_scrape_log()"]
     LOG --> LOOP
 
-    LOOP -->|Koniec| REPORT[Raport podsumowujący]
+    LOOP -->|Koniec| DEDUP["_run_global_dedup()<br/>Cross-source deduplikacja"]
+    DEDUP --> SNAPSHOT["create_daily_snapshot()"]
+    SNAPSHOT --> REPORT[Raport podsumowujący]
 
     REPORT --> DASHBOARD["Dashboard HTML/FastAPI<br/>Odczyt z MySQL<br/>Filtry + wykresy"]
 
@@ -391,20 +407,30 @@ jobDB/
 │   │       ├── index.html           # HTML shell
 │   │       └── style.css            # Style
 │   ├── db/
-│   │   ├── database.py          # Singleton MySQL connection
+│   │   ├── database.py          # Singleton MySQL connection (env vars)
 │   │   ├── migrations.py        # DDL: CREATE/DROP tabel
-│   │   └── queries.py           # Operacje: upsert, log, snapshot
+│   │   └── queries.py           # Operacje: upsert, log, snapshot, mark_inactive
 │   ├── models/
 │   │   └── schema.py            # Modele Pydantic + enumy
 │   ├── pipeline/
 │   │   ├── orchestrator.py      # Główny przepływ pipeline
 │   │   ├── normalizer.py        # Normalizacja danych
-│   │   └── deduplicator.py      # Deduplikacja (niezintegrowany)
+│   │   ├── deduplicator.py      # Deduplikacja cross-source
+│   │   └── polish_cities.py     # Aliasy i regiony polskich miast
 │   └── scrapers/
 │       ├── base.py              # BaseScraper (klasa abstrakcyjna)
-│       └── pracapl.py           # Scraper praca.pl
+│       ├── _justjoin_base.py    # Baza dla justjoin.it + rocketjobs
+│       ├── pracapl.py           # Scraper praca.pl (HTML)
+│       ├── pracujpl.py          # Scraper pracuj.pl (Playwright)
+│       ├── justjoinit.py        # Scraper justjoin.it (API)
+│       ├── rocketjobs.py        # Scraper rocketjobs.pl (API)
+│       ├── nofluffjobs.py       # Scraper nofluffjobs.com (API)
+│       └── jooble.py            # Scraper jooble.org (wyłączony)
 ├── tests/
 │   └── test_scrapers/
 │       └── test_salary_parsing.py  # 26 testów parsowania salary
+├── Dockerfile                   # Docker image (python:3.12-slim)
+├── Procfile                     # Railway start command
+├── railway.toml                 # Railway deploy config
 └── pyproject.toml               # Zależności, entry points, ruff config
 ```
