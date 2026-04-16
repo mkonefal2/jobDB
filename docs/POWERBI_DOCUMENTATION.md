@@ -3,7 +3,7 @@
 > Kompletna dokumentacja modelu danych, calculated columns, measures i raportów Power BI
 > dla projektu **jobDB** — trackera polskiego rynku pracy.
 
-**Źródło danych:** MySQL 8+ (`localhost:3306/jobdb`) — 112k+ ofert pracy z 4 portali  
+**Źródło danych:** MySQL 8+ (`localhost:3306/jobdb`) — 112k+ ofert pracy z 6 portali  
 **Odświeżanie:** Scheduled Refresh co 6h (Import Mode) lub DirectQuery  
 **Autor:** jobDB Pipeline (Python scrapers → MySQL → Power BI)
 
@@ -37,8 +37,9 @@
 │ • pracuj.pl         │     │ • job_offers  112k+  │     │ • Star Schema       │
 │ • justjoin.it       │     │ • job_snapshots      │     │ • DAX Measures      │
 │ • rocketjobs.pl     │     │ • daily_stats        │     │ • 6 Report Pages    │
-└─────────────────────┘     │ • scrape_log         │     │ • Scheduled Refresh │
-                            └─────────────────────┘     └─────────────────────┘
+│ • nofluffjobs.pl    │     │ • scrape_log         │     │ • Scheduled Refresh │
+│ • jooble.org        │     └─────────────────────┘     └─────────────────────┘
+└─────────────────────┘
 ```
 
 **Tryb połączenia: Import Mode** (zalecany)
@@ -288,6 +289,7 @@ DATATABLE(
         { "justjoinit",  "JustJoin.it",   "https://justjoin.it",       "IT Niche"    },
         { "pracuj",      "Pracuj.pl",     "https://www.pracuj.pl",     "Job Board"   },
         { "rocketjobs",  "RocketJobs.pl", "https://rocketjobs.pl",     "IT Niche"    },
+        { "nofluffjobs", "NoFluffJobs",   "https://nofluffjobs.com",   "IT Niche"    },
         { "jooble",      "Jooble",        "https://pl.jooble.org",     "Aggregator"  }
     }
 )
@@ -579,7 +581,7 @@ VAR _itKeywords = {"developer", "programist", "engineer", "devops", "frontend",
                    "qa", "tester", "scrum", "agile", "cloud", "architect",
                    "python", "java", "react", ".net", "sql", "admin",
                    "cybersec", "security", "sysadmin", "kubernetes", "docker"}
-VAR _isITSource = _source IN {"justjoinit", "rocketjobs"}
+VAR _isITSource = _source IN {"justjoinit", "rocketjobs", "nofluffjobs"}
 VAR _hasTechInTitle = 
     SUMX(
         _itKeywords,
@@ -1414,7 +1416,7 @@ Jeśli raport jest współdzielony z partnerami z portali pracy:
 [source] = "pracapl"
 
 // Rola: IT_Portals
-[source] IN {"justjoinit", "rocketjobs"}
+[source] IN {"justjoinit", "rocketjobs", "nofluffjobs"}
 
 // Rola: All_Data (admin)
 // Brak filtra — pełen dostęp
@@ -1653,7 +1655,7 @@ FilteredByRange = Table.SelectRows(TypedColumns, each
 
 | Bookmark | Strona | Filtry | Opis |
 |----------|--------|--------|------|
-| `IT Market Overview` | Executive | source IN {justjoinit, rocketjobs} | Tylko rynek IT |
+| `IT Market Overview` | Executive | source IN {justjoinit, rocketjobs, nofluffjobs} | Tylko rynek IT |
 | `Warsaw Focus` | Geograficzny | city = Warszawa | Analiza Warszawa |
 | `Salary Deep Dive` | Salary | is_active = true, has_salary = true | Tylko aktywne z salary |
 | `Data Quality Alert` | Quality | Completeness < 50% | Problematyczne źródła |
@@ -1669,7 +1671,7 @@ FilteredByRange = Table.SelectRows(TypedColumns, each
 | **Salary Midpoint** | Środek widełek wynagrodzenia: `(salary_min + salary_max) / 2` |
 | **Salary Transparency** | % ofert z podanym wynagrodzeniem vs łączna liczba ofert |
 | **Scrape** | Jednorazowe pobranie ofert ze źródła przez pipeline Python |
-| **Source** | Portal z ofertami pracy (praca.pl, pracuj.pl, justjoin.it, rocketjobs.pl) |
+| **Source** | Portal z ofertami pracy (praca.pl, pracuj.pl, justjoin.it, rocketjobs.pl, nofluffjobs.com, jooble.org) |
 | **Seniority** | Poziom doświadczenia wymagany w ofercie (intern→senior→manager) |
 | **Work Mode** | Tryb pracy: remote (zdalny), hybrid, onsite (stacjonarny) |
 | **Employment Category** | Znormalizowany typ umowy (UoP, B2B, UZ, mieszane) |

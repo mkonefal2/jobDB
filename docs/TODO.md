@@ -74,9 +74,9 @@ Katalog `src/analysis/` jest **pusty**.
 - [ ] Indeks rynku pracy (własny wskaźnik oparty na danych)
 - [ ] Eksport raportów (PDF/HTML)
 
-### 2.4 Dashboard — podstrony (`src/dashboard/pages/`)
+### 2.4 Dashboard — rozwój (`src/dashboard/html/`)
 
-Katalog `pages/` jest **pusty**. Streamlit wspiera multi-page apps.
+Dashboard HTML/FastAPI jest zaimplementowany z 6 stronami.
 
 **Pomysły:**
 - [ ] Strona trendów — wykresy historyczne z `daily_stats` i `job_snapshots`
@@ -169,7 +169,7 @@ Obecnie system działa na MySQL. Docelowo migracja do PostgreSQL jako hurtownia 
 - [ ] Materialized views dla częstych zapytań dashboardowych
 - [ ] Partycjonowanie tabeli `job_offers` po `source` lub `scraped_at`
 - [ ] Indeksy GIN na `technologies` (array) i GiST na `location_city`
-- [ ] Connection pooling (PgBouncer) dla wielu klientów (Streamlit + Power BI + pipeline)
+- [ ] Connection pooling (PgBouncer) dla wielu klientów (FastAPI + Power BI + pipeline)
 - [ ] Monitoring wydajności zapytań (`pg_stat_statements`)
 
 ---
@@ -209,13 +209,13 @@ Zainstalowany (`playwright>=1.40`), ale nieużywany. Potrzebny do portali SPA (j
 - [ ] Testy deduplicatora (fuzzy matching, klasteryzacja)
 - [ ] Testy pipeline (integration test z mock scraperami)
 - [ ] Testy queries (upsert, mark_inactive, snapshots z testową bazą MySQL)
-- [ ] Testy dashboardu (Streamlit testing framework)
+- [ ] Testy dashboardu (FastAPI TestClient)
 
 ### 5.5 CI/CD
 
 **Do zrobienia:**
 - [ ] GitHub Actions: lint (ruff) + testy przy PR
-- [ ] Automatyczny deploy dashboardu (np. Streamlit Cloud)
+- [ ] Automatyczny deploy dashboardu (Railway)
 - [ ] Pre-commit hooks (ruff, formatowanie)
 
 ---

@@ -1661,6 +1661,7 @@
                 "        { \"justjoinit\",  \"JustJoin.it\",   \"https://justjoin.it\",       \"IT Niche\"    },",
                 "        { \"pracuj\",      \"Pracuj.pl\",     \"https://www.pracuj.pl\",     \"Job Board\"   },",
                 "        { \"rocketjobs\",  \"RocketJobs.pl\", \"https://rocketjobs.pl\",     \"IT Niche\"    },",
+                "        { \"nofluffjobs\", \"NoFluffJobs\",   \"https://nofluffjobs.com\",   \"IT Niche\"    },",
                 "        { \"jooble\",      \"Jooble\",        \"https://pl.jooble.org\",     \"Aggregator\"  }",
                 "    }",
                 ")"

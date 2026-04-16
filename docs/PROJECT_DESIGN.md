@@ -1,7 +1,7 @@
 # Projekt systemu — jobDB
 
 **jobDB** — tracker rynku pracy w stylu SteamDB dla polskich portali z ofertami pracy.
-System scrapuje oferty, normalizuje dane, przechowuje je w MySQL i prezentuje na dashboardzie Streamlit.
+System scrapuje oferty, normalizuje dane, przechowuje je w MySQL i prezentuje w dashboardzie HTML/FastAPI oraz Power BI.
 
 **Docelowa architektura:** Migracja do PostgreSQL jako hurtownia danych (star schema) z podłączeniem Power BI.
 
@@ -12,7 +12,7 @@ System scrapuje oferty, normalizuje dane, przechowuje je w MySQL i prezentuje na
 ```mermaid
 flowchart TB
     subgraph UI ["Warstwa prezentacji"]
-        DASH["Streamlit Dashboard<br/>(src/dashboard/app.py)"]
+        DASH["HTML Dashboard + FastAPI<br/>(src/dashboard/html/)"]
         CLI["Skrypty CLI<br/>(scripts/)"]
     end
 
@@ -63,7 +63,7 @@ flowchart TB
 | Modele danych | `pydantic` v2 (walidacja, computed fields) |
 | Baza danych | `mysql-connector-python` (MySQL 8+) |
 | Pipeline | `tenacity` (retry), `rapidfuzz` (fuzzy matching) |
-| Dashboard | `streamlit`, `plotly`, `polars` |
+| Dashboard | `fastapi`, `uvicorn` |
 | CLI / UX | `rich` (formatowanie terminala), `argparse` |
 | Scheduler | `schedule` (zainstalowany, nieużywany) |
 | Testy | `pytest`, `pytest-asyncio` |
@@ -205,27 +205,24 @@ Enumy: `Source`, `WorkMode`, `Seniority`, `SalaryPeriod`, `ScrapeStatus`
 
 ---
 
-### 5. Dashboard (`src/dashboard/app.py`)
+### 5. Dashboard (`src/dashboard/html/`)
 
-Framework: **Streamlit** + **Plotly** + **Polars** (read-only na MySQL)
+Framework: **FastAPI** + **Chart.js** (REST API + SPA, read-only na MySQL)
 
-**Filtry (sidebar):**
+**Filtry:**
 - Multi-select: Źródło, Miasto, Tryb pracy, Seniority
-- Wyświetlanie: Timestamp ostatniego scrapowania
+- Checkbox: Tylko aktywne oferty
 
-**Sekcje główne:**
+**Sekcje główne (6 stron SPA):**
 
-| Sekcja | Zawartość |
+| Strona | Zawartość |
 |---|---|
-| KPI (4 metryki) | Aktywne oferty, z wynagrodzeniem, firmy, miasta |
-| Top 15 miast | Wykres słupkowy horyzontalny |
-| Tryb pracy | Wykres donut |
-| Seniority | Wykres słupkowy |
-| Typ zatrudnienia | Wykres donut |
-| Oferty wg źródła | Tabela z pokryciem wynagrodzeń |
-| Top 20 firm | Tabela: liczba ofert, miasta, dominujący tryb pracy |
-| Lista ofert | Tabela (max 200), filtrowanie po tytule, linki do źródeł |
-| Log scrapowania | 20 ostatnich uruchomień |
+| Executive Summary | KPI, źródła, seniority, tryb pracy, oferty wg dnia |
+| Wynagrodzenia | Mediany, przedziały, rozkłady, porównania |
+| Firmy | Top firmy, wielkość, lokalizacje |
+| Lokalizacje | Top miasta, tryby pracy per miasto |
+| Trendy | Nowe oferty/dzień, wzrost/spadek, aktywność źródeł |
+| Jakość danych | Kompletność pól, pokrycie wynagrodzeń |
 
 Wszystkie dane respektują aktywne filtry (dynamiczne WHERE).
 
@@ -292,13 +289,12 @@ Agent VS Code (Copilot) do weryfikacji i aktualizacji postępu prac:
 - Generuje raporty postępu z paskami procentowymi
 - Wykrywa rozbieżności między dokumentacją a implementacją
 
-### 10. Dashboard — zakładka Postęp prac (`src/dashboard/pages/2_📋_Postep_prac.py`)
+### 10. Dashboard HTML (`src/dashboard/html/`)
 
-Streamlit multi-page z:
-- **Paski postępu** — ogólny + per priorytet (P1–P5) z rozwijalnymi listami zadań
-- **Tabela statusu komponentów** — 25 komponentów z lokalizacją plików
-- **Roadmapa** — interaktywny wykres Gantta (Plotly) z harmonogramem prac
-- **Dokumentacja** — 3 zakładki: schemat DB, projekt systemu, TODO (renderowane z plików `.md`)
+SPA (Single Page Application) z REST API:
+- **Backend**: FastAPI z endpointami odpowiadającymi 69 miarom DAX z Power BI
+- **Frontend**: Vanilla JS + Chart.js, 6 stron nawigacyjnych
+- **Deploy**: Railway (uvicorn)
 
 ---
 
@@ -320,7 +316,7 @@ flowchart LR
 
     subgraph BI ["Business Intelligence"]
         PBI["Power BI<br/>(DirectQuery)"]
-        DASH["Streamlit<br/>(monitoring)"]
+        DASH["HTML Dashboard<br/>(monitoring)"]
     end
 
     SCRAP --> NORM --> DEDUP --> FACT
@@ -357,7 +353,7 @@ flowchart TD
 
     LOOP -->|Koniec| REPORT[Raport podsumowujący]
 
-    REPORT --> DASHBOARD["Dashboard Streamlit<br/>Odczyt z MySQL<br/>Filtry + wykresy"]
+    REPORT --> DASHBOARD["Dashboard HTML/FastAPI<br/>Odczyt z MySQL<br/>Filtry + wykresy"]
 
     style DETAIL diamond
 ```
@@ -388,9 +384,12 @@ jobDB/
 ├── src/
 │   ├── analysis/                # [PUSTY] Moduł analityczny
 │   ├── dashboard/
-│   │   ├── app.py               # Dashboard Streamlit
-│   │   └── pages/
-│   │       └── 2_📋_Postep_prac.py  # Zakładka postępu prac
+│   │   ├── __init__.py
+│   │   └── html/
+│   │       ├── api.py               # FastAPI REST backend
+│   │       ├── app.js               # SPA frontend (Chart.js)
+│   │       ├── index.html           # HTML shell
+│   │       └── style.css            # Style
 │   ├── db/
 │   │   ├── database.py          # Singleton MySQL connection
 │   │   ├── migrations.py        # DDL: CREATE/DROP tabel

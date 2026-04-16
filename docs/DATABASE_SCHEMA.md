@@ -187,6 +187,7 @@ Definiowane w `src/models/schema.py` jako `str, Enum`:
 | `justjoinit` | justjoin.it |
 | `rocketjobs` | rocketjobs.pl |
 | `pracuj` | pracuj.pl |
+| `nofluffjobs` | nofluffjobs.com |
 | `jooble` | jooble.org |
 
 ### `WorkMode` — tryb pracy
