@@ -148,6 +148,12 @@ class PracujPLScraper(BaseScraper):
         if not title:
             return []
 
+        # Skip test offers published by pracuj.pl on production
+        title_lower = title.lower()
+        company_lower = (company or "").lower()
+        if "oferta testowa" in title_lower or "firma testowa" in company_lower:
+            return []
+
         # Salary
         salary_min, salary_max, currency, period, salary_type = _parse_salary(
             group.get("salaryDisplayText", "")

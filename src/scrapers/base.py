@@ -79,6 +79,7 @@ class BaseScraper(ABC):
     def scrape(self) -> ScrapedResult:
         result = ScrapedResult(source=self.source, started_at=datetime.utcnow())
         page = 1
+        prev_ids: set[str] = set()
 
         console.print(f"[bold cyan]Starting scrape: {self.source.value}[/]")
 
@@ -112,6 +113,13 @@ class BaseScraper(ABC):
                 if not offers:
                     console.print("[dim]no more results[/]")
                     break
+
+                # Detect duplicate pages (site returning the same results)
+                curr_ids = {o.source_id for o in offers}
+                if curr_ids and curr_ids == prev_ids:
+                    console.print("[yellow]duplicate page detected, stopping[/]")
+                    break
+                prev_ids = curr_ids
 
                 console.print(f"[green]{len(offers)} offers[/]")
                 result.offers.extend(offers)
